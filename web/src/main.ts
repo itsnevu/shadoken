@@ -1,0 +1,161 @@
+// ============================================================================
+// Shadoken — application entry point & orchestrator.
+//
+// Wires together the four subsystems built independently against the shared
+// contracts in ./types.ts and ./events.ts:
+//   - landing  (renderLanding)         — the marketing/entry screen
+//   - wallet   (wallet)                — Phantom connect + sign-in auth
+//   - game     (launchGame)            — the Phaser game
+//   - net      (createNetClient)       — Colyseus multiplayer
+//   - pwa      (registerServiceWorker) — installable / offline
+// ============================================================================
+
+import './style.css';
+import { bus } from './events';
+import { appState } from './app-state';
+import { MULTIPLAYER } from './config';
+import type { GameHandle, NetHandle, PlayerSnapshot } from './types';
+
+import { renderLanding } from './landing/landing';
+import { wallet } from './wallet/wallet';
+import { launchGame } from './game';
+import { createNetClient } from './net';
+import { registerServiceWorker } from './pwa/register-sw';
+import { mountGameTopbar } from './ui/game-topbar';
+import { showToast } from './ui/toast';
+
+const landingEl = document.getElementById('screen-landing') as HTMLElement;
+const gameScreenEl = document.getElementById('screen-game') as HTMLElement;
+const gameRootEl = document.getElementById('game-root') as HTMLElement;
+const hudEl = document.getElementById('game-hud') as HTMLElement;
+
+let game: GameHandle | null = null;
+let net: NetHandle | null = null;
+let disposeTopbar: (() => void) | null = null;
+
+// ---- Screen switching -------------------------------------------------------
+
+function showLanding() {
+  gameScreenEl.classList.add('hidden');
+  gameScreenEl.setAttribute('aria-hidden', 'true');
+  landingEl.classList.remove('hidden');
+  document.body.classList.remove('in-game');
+  appState.setScreen(appState.isConnected ? 'menu' : 'landing');
+}
+
+function showGameScreen() {
+  landingEl.classList.add('hidden');
+  gameScreenEl.classList.remove('hidden');
+  gameScreenEl.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('in-game');
+  appState.setScreen('playing');
+}
+
+// ---- Game lifecycle ---------------------------------------------------------
+
+async function enterGame(multiplayer: boolean) {
+  // Wallet is required to play.
+  if (!appState.isConnected) {
+    const session = await wallet.connect();
+    if (!session) {
+      showToast('Connect your Phantom wallet to play.', 'error');
+      return;
+    }
+  }
+  const session = appState.session;
+
+  // Bring up multiplayer first (best-effort). If it fails we fall back to solo.
+  let seed = Math.floor((Date.now() % 2147483647));
+  let mp = false;
+  if (multiplayer && MULTIPLAYER.enabled) {
+    try {
+      net = createNetClient();
+      bus.emit('net:status', 'connecting');
+      await net.join(session);
+      seed = net.seed;
+      mp = true;
+    } catch (err) {
+      console.warn('[main] multiplayer join failed, falling back to solo', err);
+      showToast('Arena unavailable — playing solo.', 'info');
+      net?.leave();
+      net = null;
+    }
+  }
+
+  showGameScreen();
+
+  game = launchGame({
+    parent: gameRootEl,
+    session,
+    seed,
+    multiplayer: mp,
+    skin: 0,
+  });
+
+  // Bridge game <-> net: local transforms out, remote players in.
+  if (net && mp) {
+    const liveNet = net;
+    game.onLocalSnapshot((snap) => liveNet.sendInput(snap));
+    liveNet.onPlayers((players: PlayerSnapshot[]) => {
+      const others = players.filter((p) => p.sessionId !== liveNet.sessionId);
+      game?.setRemotePlayers(others);
+      bus.emit('net:players', players);
+    });
+  }
+
+  // Top HUD bar (wallet chip, live player count, exit).
+  disposeTopbar = mountGameTopbar(hudEl, { multiplayer: mp });
+  bus.emit('game:ready', undefined);
+}
+
+function exitGame() {
+  game?.destroy();
+  game = null;
+  net?.leave();
+  net = null;
+  disposeTopbar?.();
+  disposeTopbar = null;
+  hudEl.innerHTML = '';
+  showLanding();
+}
+
+// ---- Wire events ------------------------------------------------------------
+
+bus.on('game:enter', ({ multiplayer }) => {
+  enterGame(multiplayer).catch((err) => {
+    console.error('[main] enterGame failed', err);
+    showToast('Failed to start game.', 'error');
+    exitGame();
+  });
+});
+
+bus.on('game:exit', () => exitGame());
+
+bus.on('game:over', (result) => {
+  appState.recordScore(result.score);
+  // The game shows its own game-over scene; net keeps running for the lobby.
+});
+
+bus.on('wallet:connected', (session) => {
+  showToast(`Connected ${session.shortAddress}`, 'success');
+});
+bus.on('wallet:disconnected', () => {
+  if (appState.screen !== 'landing') showLanding();
+});
+bus.on('toast', ({ message, kind }) => showToast(message, kind));
+
+// ---- Boot -------------------------------------------------------------------
+
+function boot() {
+  registerServiceWorker();
+  renderLanding(landingEl);
+  wallet.init(); // eager reconnect + provider event listeners
+  // Mount the Phantom connect button into the landing nav slot.
+  const navSlot = document.getElementById('nav-wallet');
+  if (navSlot) wallet.mountConnectButton(navSlot, { variant: 'nav' });
+  appState.setScreen(appState.isConnected ? 'menu' : 'landing');
+  // eslint-disable-next-line no-console
+  console.info('%cShadoken', 'color:#e23b2e;font-weight:bold', 'booted');
+}
+
+boot();

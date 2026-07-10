@@ -1,0 +1,110 @@
+/* In-game top HUD bar. Sits above the Phaser canvas, respects notches. */
+#game-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.game-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px;
+  background: linear-gradient(180deg, rgba(10, 12, 14, 0.85), rgba(10, 12, 14, 0));
+  pointer-events: none;
+}
+.game-topbar > * {
+  pointer-events: auto;
+}
+
+.gt-spacer {
+  flex: 1;
+}
+
+.gt-exit {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: rgba(38, 44, 52, 0.75);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.gt-exit:active {
+  transform: scale(0.96);
+}
+
+.gt-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(38, 44, 52, 0.75);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  backdrop-filter: blur(6px);
+}
+.gt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.gt-dot[data-status='connected'] {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+.gt-dot[data-status='connecting'] {
+  background: var(--gold);
+}
+.gt-dot[data-status='error'],
+.gt-dot[data-status='disconnected'] {
+  background: var(--danger);
+}
+.gt-status.is-solo .gt-dot {
+  background: var(--muted);
+}
+.gt-count {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 12px;
+  margin-left: 2px;
+}
+
+.gt-wallet {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(107, 91, 208, 0.22);
+  border: 1px solid var(--phantom-deep);
+  color: var(--phantom);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  backdrop-filter: blur(6px);
+}
+.gt-wallet-ic {
+  opacity: 0.9;
+}
+
+@media (max-width: 480px) {
+  .gt-status-text {
+    display: none;
+  }
+}

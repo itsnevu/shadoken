@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#16191d" />
+    <meta name="description" content="Shadoken — command a school of ninjas across endless gravity-bending chambers. Connect Phantom, race friends in real-time multiplayer. Web3 · PWA · Mobile." />
+
+    <!-- PWA / iOS -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Shadoken" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Shadoken — Numerous Ninjas" />
+    <meta property="og:description" content="A school of ninjas. Any axis. Endless chambers. Connect Phantom & race in real-time." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/logo.png" />
+
+    <title>Shadoken — Numerous Ninjas · Web3 Multiplayer</title>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Landing screen (rendered by src/landing) -->
+      <main id="screen-landing" class="screen"></main>
+
+      <!-- Game screen (Phaser mounts into #game-root, DOM HUD overlays it) -->
+      <section id="screen-game" class="screen hidden" aria-hidden="true">
+        <div id="game-root"></div>
+        <div id="game-hud"></div>
+      </section>
+
+      <!-- Portals for wallet modal + toasts -->
+      <div id="wallet-modal-root"></div>
+      <div id="toast-root" aria-live="polite"></div>
+    </div>
+
+    <noscript>
+      <div style="padding:40px;text-align:center;font-family:system-ui">
+        Shadoken requires JavaScript to play. Please enable it in your browser.
+      </div>
+    </noscript>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
