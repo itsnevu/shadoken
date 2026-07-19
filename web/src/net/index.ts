@@ -142,7 +142,7 @@ class NetClient implements NetHandle {
     }
   }
 
-  async join(session: WalletSession | null): Promise<void> {
+  async join(session: WalletSession | null, skin = 0): Promise<void> {
     this.setStatus('connecting');
     try {
       const client = new Client(MULTIPLAYER.url);
@@ -150,6 +150,7 @@ class NetClient implements NetHandle {
       const room = await client.joinOrCreate(MULTIPLAYER.roomName, {
         wallet: session?.address ?? '',
         name: session?.shortAddress ?? 'Guest',
+        skin,
       });
 
       this.room = room;
@@ -165,6 +166,10 @@ class NetClient implements NetHandle {
         const st = s as ArenaStateLike;
         if (typeof st?.seed === 'number') this.setSeed(st.seed);
         this.scheduleEmit();
+      });
+
+      room.onMessage('sabotage', (data: { type: string }) => {
+        bus.emit('game:recv-sabotage', data.type);
       });
 
       this.subscribePlayers(room);

@@ -66,6 +66,7 @@ export interface PlayerInputMessage {
   state: NinjaState;
   score: number;
   alive: boolean;
+  sabotage?: string;
 }
 
 /** Result emitted when a run ends. */
@@ -101,7 +102,7 @@ export interface NetHandle {
   readonly connected: boolean;
   readonly sessionId: string | null;
   readonly seed: number;
-  join(session: WalletSession | null): Promise<void>;
+  join(session: WalletSession | null, skin?: number): Promise<void>;
   leave(): void;
   sendInput(msg: PlayerInputMessage): void;
   onPlayers(cb: (players: PlayerSnapshot[]) => void): void;

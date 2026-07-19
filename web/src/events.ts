@@ -10,13 +10,15 @@ export interface AppEventMap {
   'wallet:error': { message: string };
   'wallet:connect-request': void;
   'screen:change': AppScreen;
-  'game:enter': { multiplayer: boolean; guest?: boolean };
+  'game:enter': { multiplayer: boolean; guest?: boolean; skin?: number };
   'game:ready': void;
   'game:exit': void;
   'game:over': RunResult;
   'game:guest-time': number;
   'net:status': 'connecting' | 'connected' | 'disconnected' | 'error';
   'net:players': PlayerSnapshot[];
+  'audio:muted': boolean;
+  'game:recv-sabotage': string;
   'toast': { message: string; kind?: 'info' | 'success' | 'error' };
 }
 

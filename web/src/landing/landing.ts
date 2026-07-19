@@ -14,6 +14,8 @@
 
 import './landing.css';
 import { bus } from '../events';
+import { MULTIPLAYER } from '../config';
+import { shortenAddress } from '../app-state';
 
 // ---- Small building blocks --------------------------------------------------
 
@@ -171,6 +173,7 @@ function markup(): string {
   <main class="lp">
     ${hero()}
     ${marquee()}
+    ${leaderboardSection()}
     ${features()}
     ${howToPlay()}
     ${showcase()}
@@ -180,6 +183,10 @@ function markup(): string {
   </main>
 
   ${footer()}
+
+  <button class="scroll-to-top" data-scroll-top aria-label="Scroll to top">
+    ▲
+  </button>
   `;
 }
 
@@ -241,6 +248,20 @@ function hero(): string {
             Spectate as Guest (30s)
           </button>
         </div>
+
+        <div class="lp-hero__skin-selector">
+          <span class="lp-skin-label">Select Swarm Color:</span>
+          <div class="lp-skin-options">
+            <button class="lp-skin-opt is-active" data-skin="0" style="--color: #ffffff" title="Obsidian White" aria-label="Obsidian White"></button>
+            <button class="lp-skin-opt" data-skin="1" style="--color: #ff8a70" title="Coral Red" aria-label="Coral Red"></button>
+            <button class="lp-skin-opt" data-skin="2" style="--color: #9fe0ff" title="Neon Cyan" aria-label="Neon Cyan"></button>
+            <button class="lp-skin-opt" data-skin="3" style="--color: #ffd27f" title="Gold" aria-label="Gold"></button>
+            <button class="lp-skin-opt" data-skin="4" style="--color: #c4a0ff" title="Solana Purple" aria-label="Solana Purple"></button>
+            <button class="lp-skin-opt" data-skin="5" style="--color: #8effb0" title="Aurora Green" aria-label="Aurora Green"></button>
+            <button class="lp-skin-opt" data-skin="6" style="--color: #ff9fd0" title="Sakura Pink" aria-label="Sakura Pink"></button>
+          </div>
+        </div>
+
         <ul class="lp-hero__stats">
           <li class="lp-stat-card"><strong>42</strong><span>ninjas / swarm</span></li>
           <li class="lp-stat-card"><strong>&#8734;</strong><span>chambers</span></li>
@@ -404,6 +425,23 @@ function faq(): string {
   </section>`;
 }
 
+function leaderboardSection(): string {
+  return `
+  <section class="lp-section" id="lp-all-time-leaderboard" style="max-width: 640px; margin: 0 auto;">
+    <header class="lp-head reveal">
+      <span class="lp-eyebrow">Competition</span>
+      <h2 class="lp-head__title">All-Time High Scores</h2>
+      <p class="lp-head__sub">The best ninja commanders to ever enter the arena.</p>
+    </header>
+    <div class="lp-leaderboard-card reveal">
+      <div class="lp-leaderboard-list" data-all-time-list>
+        <div class="lp-leaderboard-loading">Loading highscores...</div>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
 function cta(): string {
   return `
   <section class="lp-cta reveal">
@@ -465,13 +503,28 @@ function wire(root: HTMLElement): void {
   const reduceMotion =
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Scroll to Top button reference
+  const scrollTopBtn = root.querySelector<HTMLButtonElement>('[data-scroll-top]');
+
+  let selectedSkin = 0;
+
+  // Skin Selector click wiring
+  const skinOpts = root.querySelectorAll<HTMLButtonElement>('.lp-skin-opt');
+  skinOpts.forEach((opt) => {
+    opt.addEventListener('click', () => {
+      skinOpts.forEach((o) => o.classList.remove('is-active'));
+      opt.classList.add('is-active');
+      selectedSkin = Number(opt.dataset.skin) || 0;
+    });
+  });
+
   // CTA buttons → bus events.
   root.querySelectorAll<HTMLButtonElement>('[data-enter]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const type = btn.dataset.enter;
       const mp = type === 'mp' || type === 'guest';
       const guest = type === 'guest';
-      bus.emit('game:enter', { multiplayer: mp, guest });
+      bus.emit('game:enter', { multiplayer: mp, guest, skin: selectedSkin });
     });
   });
 
@@ -574,8 +627,15 @@ function wire(root: HTMLElement): void {
         const depth = Number(layer.dataset.parallax) || 0;
         layer.style.transform = `translate3d(0, ${(y * depth).toFixed(1)}px, 0)`;
       }
+      // Toggle scroll-to-top button
+      if (scrollTopBtn) {
+        if (y > 300) scrollTopBtn.classList.add('is-visible');
+        else scrollTopBtn.classList.remove('is-visible');
+      }
+
       ticking = false;
     };
+
     window.addEventListener(
       'scroll',
       () => {
@@ -587,7 +647,60 @@ function wire(root: HTMLElement): void {
       { passive: true },
     );
     apply();
+  } else {
+    // If reduceMotion is on, still toggle scroll-to-top button visibility on scroll
+    window.addEventListener('scroll', () => {
+      if (scrollTopBtn) {
+        if (window.scrollY > 300) scrollTopBtn.classList.add('is-visible');
+        else scrollTopBtn.classList.remove('is-visible');
+      }
+    }, { passive: true });
   }
+
+  // Scroll to Top button handler
+  scrollTopBtn?.addEventListener('click', () => {
+    window.scrollTo({
+      top: 0,
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
+  });
+
+  // Load All-Time High Scores
+  const allTimeListEl = root.querySelector<HTMLElement>('[data-all-time-list]');
+  const fetchHighscores = () => {
+    if (!allTimeListEl) return;
+    const api = MULTIPLAYER.url.replace(/^ws/, 'http') + '/api/leaderboard';
+    fetch(api)
+      .then((res) => {
+        if (!res.ok) throw new Error('API failure');
+        return res.json() as Promise<Array<{ name: string; wallet: string; score: number }>>;
+      })
+      .then((scores) => {
+        if (scores.length === 0) {
+          allTimeListEl.innerHTML = '<div class="lp-leaderboard-empty">No highscores yet. Be the first!</div>';
+          return;
+        }
+        allTimeListEl.innerHTML = scores.map((s, idx) => {
+          const rank = idx + 1;
+          const dispName = s.wallet ? shortenAddress(s.wallet) : s.name;
+          const rowTitle = s.wallet ? `Wallet: ${s.wallet}` : `Guest: ${s.name}`;
+          return `
+            <div class="lp-leaderboard-row" title="${rowTitle}">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span class="lp-leaderboard-rank">${rank}.</span>
+                <span class="lp-leaderboard-name">${dispName}</span>
+              </div>
+              <span class="lp-leaderboard-score">${s.score} pts</span>
+            </div>
+          `;
+        }).join('');
+      })
+      .catch((e) => {
+        console.warn('[landing] failed to load leaderboard', e);
+        allTimeListEl.innerHTML = '<div class="lp-leaderboard-empty">Could not load highscores. Server offline.</div>';
+      });
+  };
+  fetchHighscores();
 }
 
 // ---- Inline SVG icons -------------------------------------------------------

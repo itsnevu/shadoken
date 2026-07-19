@@ -226,6 +226,12 @@ export class PreloadScene extends Phaser.Scene {
       g.fillRect(9, 4, 4, 14);
       g.fillRect(4, 9, 14, 4);
     });
+    this.pickupBg('pu_mystery', (g) => {
+      g.lineStyle(2, 0x14f195, 1);
+      g.strokeRect(6, 6, 10, 10);
+      g.fillStyle(0x9945ff, 1);
+      g.fillCircle(11, 11, 2);
+    });
   }
 
   private pickupBg(key: string, glyph: (g: Phaser.GameObjects.Graphics) => void): void {

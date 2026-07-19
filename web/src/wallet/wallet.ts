@@ -38,7 +38,9 @@ function hydrateBalance(address: string): void {
     if (lamports == null) return;
     const current = appState.session;
     if (!current || current.address !== address) return;
-    appState.setSession({ ...current, lamports });
+    const updated = { ...current, lamports };
+    appState.setSession(updated);
+    bus.emit('wallet:connected', updated);
   });
 }
 

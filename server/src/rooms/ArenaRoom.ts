@@ -9,6 +9,7 @@
 
 import { Room, type Client } from '@colyseus/core';
 import { ArenaState, Player } from '../schema/ArenaState.js';
+import { leaderboardDb } from '../leaderboard-db.js';
 
 /** Ninja logic state — kept in sync with web/src/types.ts NinjaState. */
 type NinjaState = 'idle' | 'run' | 'jump' | 'fall' | 'swim' | 'dead';
@@ -31,6 +32,7 @@ interface InputMessage {
   state?: string;
   score?: number;
   alive?: boolean;
+  sabotage?: string;
 }
 
 /** One leaderboard row broadcast to clients. */
@@ -133,9 +135,17 @@ export class ArenaRoom extends Room<ArenaState> {
 
     // Score is monotonic — never let a relayed value walk backwards.
     const nextScore = clampFinite(msg.score, COORD_LIMIT, p.score);
-    if (nextScore > p.score) p.score = Math.floor(nextScore);
+    if (nextScore > p.score) {
+      p.score = Math.floor(nextScore);
+      void leaderboardDb.record(p.name, p.wallet, p.score);
+    }
 
     if (typeof msg.alive === 'boolean') p.alive = msg.alive;
+
+    // Relayed Sabotage Action
+    if (typeof msg.sabotage === 'string' && msg.sabotage.length > 0) {
+      this.broadcast('sabotage', { senderId: client.sessionId, type: msg.sabotage }, { except: client });
+    }
   }
 
   /** Broadcast a compact top-8 leaderboard to all clients. */

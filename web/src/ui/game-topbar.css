@@ -26,6 +26,25 @@
   flex: 1;
 }
 
+.gt-audio {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: rgba(30, 25, 64, 0.75);
+  color: var(--ink);
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+.gt-audio:active {
+  transform: scale(0.92);
+}
+
 .gt-exit {
   appearance: none;
   border: 1px solid var(--line);

@@ -22,6 +22,7 @@ import { launchGame } from './game';
 import { createNetClient } from './net';
 import { registerServiceWorker } from './pwa/register-sw';
 import { mountGameTopbar } from './ui/game-topbar';
+import { mountGameLeaderboard } from './ui/game-leaderboard';
 import { showToast } from './ui/toast';
 
 const landingEl = document.getElementById('screen-landing') as HTMLElement;
@@ -32,6 +33,7 @@ const hudEl = document.getElementById('game-hud') as HTMLElement;
 let game: GameHandle | null = null;
 let net: NetHandle | null = null;
 let disposeTopbar: (() => void) | null = null;
+let disposeLeaderboard: (() => void) | null = null;
 
 // ---- Screen switching -------------------------------------------------------
 
@@ -53,7 +55,7 @@ function showGameScreen() {
 
 // ---- Game lifecycle ---------------------------------------------------------
 
-async function enterGame(multiplayer: boolean, guest = false) {
+async function enterGame(multiplayer: boolean, guest = false, skin = 0) {
   // Wallet is required to play.
   if (!guest && !appState.isConnected) {
     const session = await wallet.connect();
@@ -71,7 +73,7 @@ async function enterGame(multiplayer: boolean, guest = false) {
     try {
       net = createNetClient();
       bus.emit('net:status', 'connecting');
-      await net.join(session);
+      await net.join(session, skin);
       seed = net.seed;
       mp = true;
     } catch (err) {
@@ -89,7 +91,7 @@ async function enterGame(multiplayer: boolean, guest = false) {
     session,
     seed,
     multiplayer: mp,
-    skin: 0,
+    skin,
     guest,
   });
 
@@ -106,6 +108,12 @@ async function enterGame(multiplayer: boolean, guest = false) {
 
   // Top HUD bar (wallet chip, live player count, exit).
   disposeTopbar = mountGameTopbar(hudEl, { multiplayer: mp, guest });
+
+  // Leaderboard overlay (for multiplayer).
+  if (mp) {
+    disposeLeaderboard = mountGameLeaderboard(hudEl, net?.sessionId ?? null);
+  }
+
   bus.emit('game:ready', undefined);
 }
 
@@ -116,14 +124,16 @@ function exitGame() {
   net = null;
   disposeTopbar?.();
   disposeTopbar = null;
+  disposeLeaderboard?.();
+  disposeLeaderboard = null;
   hudEl.innerHTML = '';
   showLanding();
 }
 
 // ---- Wire events ------------------------------------------------------------
 
-bus.on('game:enter', ({ multiplayer, guest }) => {
-  enterGame(multiplayer, !!guest).catch((err) => {
+bus.on('game:enter', ({ multiplayer, guest, skin }) => {
+  enterGame(multiplayer, !!guest, skin).catch((err) => {
     console.error('[main] enterGame failed', err);
     showToast('Failed to start game.', 'error');
     exitGame();

@@ -14,12 +14,23 @@ import { WebSocketTransport } from '@colyseus/ws-transport';
 import { monitor } from '@colyseus/monitor';
 
 import { ArenaRoom } from './rooms/ArenaRoom.js';
+import { leaderboardDb } from './leaderboard-db.js';
 
 const port = Number(process.env.PORT) || 2567;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// High scores API.
+app.get('/api/leaderboard', (_req, res) => {
+  leaderboardDb.getScores()
+    .then((scores) => res.json(scores))
+    .catch((err) => {
+      console.error('[server] leaderboard fetch failed', err);
+      res.status(500).json({ error: 'Failed to retrieve highscores' });
+    });
+});
 
 // Health check — reports live room count for uptime probes / the web client.
 app.get('/', (_req, res) => {

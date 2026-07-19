@@ -1,0 +1,115 @@
+/* game-leaderboard.css — Floating glassmorphic leaderboard on the right side */
+
+.game-leaderboard {
+  position: absolute;
+  top: 80px;
+  right: 14px;
+  width: 220px;
+  background: rgba(26, 21, 66, 0.65);
+  border: 1px solid rgba(153, 69, 255, 0.2);
+  border-radius: var(--r-md);
+  padding: 12px;
+  pointer-events: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(153, 69, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-body);
+  animation: leaderboard-in 0.25s ease-out;
+}
+
+@keyframes leaderboard-in {
+  from {
+    opacity: 0;
+    transform: translateX(15px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gl-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--teal);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(153, 69, 255, 0.15);
+}
+
+.gl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-dim);
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  transition: background 0.2s ease;
+}
+
+.gl-row.is-local {
+  background: rgba(153, 69, 255, 0.15);
+  border: 1px solid rgba(153, 69, 255, 0.3);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.gl-row.is-dead {
+  opacity: 0.45;
+}
+
+.gl-player-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 140px;
+  overflow: hidden;
+}
+
+.gl-rank {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 700;
+  width: 16px;
+}
+
+.gl-name {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.gl-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gl-score {
+  font-family: var(--font-body);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.gl-row.is-local .gl-score {
+  color: var(--teal);
+}
+
+.gl-status-icon {
+  font-size: 11px;
+  color: var(--danger);
+  margin-left: 2px;
+}

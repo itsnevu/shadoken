@@ -23,6 +23,7 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
   normous = false;
   alive = true;
   isLeader = false;
+  private trailTimer = 0;
 
   facing: 1 | -1 = 1;
   ninjaState: NinjaState = 'idle';
@@ -96,6 +97,24 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
     const b = this.arcadeBody;
     b.setVelocity(0, 0);
     b.enable = false;
+
+    // Spawn color-coded ninja particle burst on death
+    try {
+      this.scene.add.particles(this.x, this.y, 'particle', {
+        speed: { min: -160, max: 160 },
+        angle: { min: 0, max: 360 },
+        scale: { start: 1.2, end: 0 },
+        blendMode: 'ADD',
+        lifespan: 600,
+        gravityY: 300,
+        quantity: 12,
+        maxParticles: 12,
+        tint: this.tintTopLeft || this.tint
+      });
+    } catch (e) {
+      console.warn('[ninja] death particles failed', e);
+    }
+
     this.setActive(false);
     this.setAlpha(0);
   }
@@ -157,5 +176,38 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
     }
     if (moveDir > 0) this.facing = 1;
     else if (moveDir < 0) this.facing = -1;
+
+    // Spawn afterimage trails if moving
+    if (moveDir !== 0 || !grounded) {
+      this.trailTimer += dt;
+      if (this.trailTimer >= 0.08) {
+        this.trailTimer = 0;
+        this.spawnTrailAfterimage();
+      }
+    } else {
+      this.trailTimer = 0;
+    }
+  }
+
+  private spawnTrailAfterimage(): void {
+    try {
+      const afterimage = this.scene.add.sprite(this.x, this.y, 'ninja');
+      afterimage.setScale(this.scaleX, this.scaleY);
+      afterimage.setOrigin(this.originX, this.originY);
+      afterimage.setRotation(this.rotation);
+      afterimage.setFlipX(this.flipX);
+      afterimage.setTint(this.tintTopLeft || this.tint);
+      afterimage.setAlpha(0.28);
+      afterimage.setDepth(this.depth - 1);
+
+      this.scene.tweens.add({
+        targets: afterimage,
+        alpha: 0,
+        duration: 320,
+        onComplete: () => afterimage.destroy()
+      });
+    } catch (e) {
+      /* ignore */
+    }
   }
 }

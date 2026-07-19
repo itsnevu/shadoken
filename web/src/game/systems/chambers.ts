@@ -16,7 +16,7 @@ import Phaser from 'phaser';
 import { CONST, CEIL_BOT } from '../constants';
 
 export type HazardKind = 'saw' | 'smasher' | 'lava' | 'bounce' | 'shooter';
-export type PickupKind = 'coin' | 'nitro' | 'normous' | 'normal' | 'new';
+export type PickupKind = 'coin' | 'nitro' | 'normous' | 'normal' | 'new' | 'mystery';
 
 interface Shooter {
   x: number;
@@ -239,7 +239,7 @@ export class ChamberManager {
     }
 
     // One pickup.
-    const kind = this.rng.weightedPick<PickupKind>(['coin', 'coin', 'nitro', 'normous', 'normal', 'new']);
+    const kind = this.rng.weightedPick<PickupKind>(['coin', 'coin', 'nitro', 'normous', 'normal', 'new', 'mystery']);
     this.addPickup(c, midX + this.rng.between(-120, 120), floorTop - this.rng.between(40, 150), kind);
   }
 
@@ -322,6 +322,7 @@ export class ChamberManager {
       : kind === 'nitro' ? 'pu_nitro'
       : kind === 'normous' ? 'pu_normous'
       : kind === 'normal' ? 'pu_normal'
+      : kind === 'mystery' ? 'pu_mystery'
       : 'pu_new';
     const obj = this.pickups.create(x, y, tex) as Phaser.Physics.Arcade.Sprite;
     obj.setDepth(14);

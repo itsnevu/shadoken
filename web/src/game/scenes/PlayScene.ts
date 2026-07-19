@@ -20,6 +20,7 @@ import { gravityDir, renderAngleFor, rotateOrientation } from '../systems/orient
 import { Ninja } from '../entities/Ninja';
 import { RemoteGhost } from '../entities/RemoteGhost';
 import { REG, type HudData, type NetBridge, type VirtualInput } from '../shared';
+import { audioSynthBgm } from '../systems/audio-synth';
 
 const SWARM = 24;
 const SKINS = [0xffffff, 0xff8a70, 0x9fe0ff, 0xffd27f, 0xc4a0ff, 0x8effb0, 0xff9fd0];
@@ -31,6 +32,7 @@ export class PlayScene extends Phaser.Scene {
   private bridge!: NetBridge;
   private input$!: VirtualInput;
   private rng!: Phaser.Math.RandomDataGenerator;
+  private offMute!: () => void;
 
   private ninjas: Ninja[] = [];
   private leader!: Ninja;
@@ -89,6 +91,16 @@ export class PlayScene extends Phaser.Scene {
     }
     this.input$ = input;
     input.left = input.right = input.jump = input.rotate = false;
+
+    // Start synthesized Background Music
+    const isMuted = localStorage.getItem('shadoken-muted') === 'true';
+    this.sound.mute = isMuted;
+    audioSynthBgm.start();
+    audioSynthBgm.setMute(isMuted);
+
+    this.offMute = bus.on('audio:muted', (muted) => {
+      this.sound.mute = muted;
+    });
 
     this.rng = new Phaser.Math.RandomDataGenerator([String(this.opts.seed)]);
     this.orientation = 0;
@@ -255,6 +267,25 @@ export class PlayScene extends Phaser.Scene {
       const gained = this.chambers.enteredCount - this.prevChambers;
       this.score += gained * Math.max(1, alive);
       this.prevChambers = this.chambers.enteredCount;
+
+      // Spawn celebratory Solana-teal particle bursts on all surviving ninjas
+      try {
+        for (const n of this.ninjas) {
+          if (n.alive) {
+            this.add.particles(n.x, n.y, 'particle', {
+              speed: { min: -100, max: 100 },
+              scale: { start: 1.4, end: 0 },
+              blendMode: 'SCREEN',
+              lifespan: 500,
+              quantity: 8,
+              maxParticles: 8,
+              tint: 0x14F195 // Solana teal
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('[game] chamber entry particles failed', e);
+      }
     }
 
     // ----- camera -----
@@ -622,6 +653,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private cleanup(): void {
+    // Stop synthesized Background Music
+    audioSynthBgm.stop();
+    if (this.offMute) this.offMute();
+
     this.ghosts.forEach((g) => g.destroy());
     this.ghosts.clear();
     this.ninjas = [];
