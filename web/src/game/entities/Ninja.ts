@@ -23,6 +23,7 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
   normous = false;
   alive = true;
   isLeader = false;
+  frozen = false;
   private trailTimer = 0;
 
   facing: 1 | -1 = 1;
@@ -155,9 +156,14 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
     // Gravity is a constant fall (localVy = -GRAVITY at rest) plus jump/bounce.
     let localVy = this.jumpVelocity - CONST.GRAVITY + this.bounceVelocity;
 
-    // Water slows the whole vector.
-    localVx *= this.moveScale;
-    localVy *= this.moveScale;
+    let currentMoveScale = this.moveScale;
+    if (this.frozen) {
+      currentMoveScale *= 0.4; // 60% slow down penalty
+    }
+
+    // Water and freeze slow the whole vector.
+    localVx *= currentMoveScale;
+    localVy *= currentMoveScale;
 
     const world = toWorld(localVx, localVy, o);
     b.setVelocity(world.x * CONST.SCALE, world.y * CONST.SCALE);
