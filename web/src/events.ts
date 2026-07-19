@@ -8,11 +8,13 @@ export interface AppEventMap {
   'wallet:connected': WalletSession;
   'wallet:disconnected': void;
   'wallet:error': { message: string };
+  'wallet:connect-request': void;
   'screen:change': AppScreen;
-  'game:enter': { multiplayer: boolean };
+  'game:enter': { multiplayer: boolean; guest?: boolean };
   'game:ready': void;
   'game:exit': void;
   'game:over': RunResult;
+  'game:guest-time': number;
   'net:status': 'connecting' | 'connected' | 'disconnected' | 'error';
   'net:players': PlayerSnapshot[];
   'toast': { message: string; kind?: 'info' | 'success' | 'error' };

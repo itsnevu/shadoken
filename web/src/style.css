@@ -1,47 +1,64 @@
 /* ==========================================================================
    Shadoken — global design tokens & shell layout.
-   Visual identity derived from the original logo: dark industrial charcoal,
-   molten-red accent, ninja/blades aesthetic. Landing & HUD styles extend
-   these tokens (see src/landing/*.css and src/ui/*.css).
+   Visual identity: Solana-inspired dark with purple-teal gradients,
+   glassmorphism, neomorphism cards, floating particles, and neon glows.
    ========================================================================== */
 
+@font-face {
+  font-family: 'ShadowWhisper';
+  src: url('/Shadow-Whisper-Demo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
-  /* Core palette */
-  --bg: #16191d;
-  --bg-1: #1b1f24;
-  --bg-2: #22272e;
-  --panel: #262c34;
-  --panel-2: #2e353e;
-  --line: #363d47;
+  /* Core palette — Solana vibes */
+  --bg: #0a0816;
+  --bg-1: #0f0c22;
+  --bg-2: #161230;
+  --panel: #1a1542;
+  --panel-2: #221a55;
+  --line: #2a2360;
 
-  --ink: #eef1f4;
-  --ink-dim: #b6bfc9;
-  --muted: #838f9c;
+  --ink: #f0f0ff;
+  --ink-dim: #b8b4d8;
+  --muted: #7e78aa;
 
-  --accent: #e23b2e;        /* molten red (logo) */
-  --accent-bright: #ff5a3c;
-  --accent-deep: #b62519;
-  --accent-glow: rgba(226, 59, 46, 0.45);
+  --accent: #9945FF;           /* Solana purple */
+  --accent-bright: #b96cff;
+  --accent-deep: #7b2fe0;
+  --accent-glow: rgba(153, 69, 255, 0.45);
 
-  --phantom: #ab9ff2;       /* Phantom brand purple */
+  --teal: #14F195;             /* Solana teal/green */
+  --teal-dim: #0fd17f;
+  --teal-glow: rgba(20, 241, 149, 0.3);
+
+  --phantom: #ab9ff2;          /* Phantom brand purple */
   --phantom-deep: #6d5bd0;
 
   --gold: #f5c542;
-  --success: #37c46b;
-  --danger: #ff4d4f;
+  --success: #14F195;
+  --danger: #ff4d6a;
   --water: #2fb6d8;
 
   /* Type */
-  --font-display: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
-  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Poppins', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Poppins', system-ui, -apple-system, sans-serif;
 
   /* Radii & shadow */
   --r-sm: 8px;
   --r-md: 14px;
   --r-lg: 22px;
-  --shadow-1: 0 6px 24px rgba(0, 0, 0, 0.35);
-  --shadow-2: 0 18px 60px rgba(0, 0, 0, 0.5);
+  --r-xl: 28px;
+  --shadow-1: 0 6px 24px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 18px 60px rgba(0, 0, 0, 0.55);
+  --shadow-glow: 0 0 40px rgba(153, 69, 255, 0.18);
   --glow: 0 0 32px var(--accent-glow);
+
+  /* Glass */
+  --glass-bg: rgba(20, 16, 50, 0.55);
+  --glass-border: rgba(153, 69, 255, 0.15);
+  --glass-blur: blur(16px);
 
   /* Layout */
   --maxw: 1160px;
@@ -63,8 +80,9 @@ body {
 
 body {
   background:
-    radial-gradient(1200px 700px at 80% -10%, rgba(226, 59, 46, 0.12), transparent 60%),
-    radial-gradient(900px 600px at -10% 110%, rgba(107, 91, 208, 0.1), transparent 55%),
+    radial-gradient(ellipse 140% 80% at 70% -10%, rgba(153, 69, 255, 0.18), transparent 55%),
+    radial-gradient(ellipse 100% 60% at -10% 120%, rgba(20, 241, 149, 0.08), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(123, 47, 224, 0.06), transparent 60%),
     var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
@@ -85,7 +103,7 @@ a {
   text-decoration: none;
 }
 a:hover {
-  color: var(--accent);
+  color: var(--teal);
 }
 
 h1,
@@ -139,27 +157,38 @@ img {
 
 /* ---- Shared button system ---- */
 .btn {
-  --btn-bg: var(--panel);
+  --btn-bg: var(--glass-bg);
   --btn-ink: var(--ink);
   appearance: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--glass-border);
   background: var(--btn-bg);
   color: var(--btn-ink);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 15px;
   letter-spacing: 0.02em;
-  padding: 12px 20px;
+  padding: 12px 22px;
   border-radius: var(--r-md);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: transform 0.15s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
   user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), transparent 60%);
+  pointer-events: none;
 }
 .btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 .btn:active {
   transform: translateY(1px);
@@ -169,15 +198,41 @@ img {
   cursor: not-allowed;
   transform: none;
 }
+
+/* Primary — gradient purple with neon glow */
 .btn--primary {
-  --btn-bg: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  --btn-bg: linear-gradient(135deg, #a855f7, #7c3aed, #6d28d9);
   --btn-ink: #fff;
-  border-color: var(--accent-deep);
-  box-shadow: 0 8px 24px rgba(226, 59, 46, 0.35);
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow:
+    0 0 20px rgba(153, 69, 255, 0.3),
+    0 8px 24px rgba(109, 40, 217, 0.3);
 }
 .btn--primary:hover {
-  box-shadow: 0 12px 32px rgba(226, 59, 46, 0.5);
+  box-shadow:
+    0 0 40px rgba(153, 69, 255, 0.5),
+    0 12px 36px rgba(109, 40, 217, 0.4);
 }
+
+/* Glow variant — animated pulsing glow */
+.btn--glow {
+  animation: btn-glow-pulse 3s ease-in-out infinite;
+}
+@keyframes btn-glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(153, 69, 255, 0.3), 0 8px 24px rgba(109, 40, 217, 0.3); }
+  50% { box-shadow: 0 0 50px rgba(153, 69, 255, 0.5), 0 12px 40px rgba(109, 40, 217, 0.45), 0 0 80px rgba(153, 69, 255, 0.15); }
+}
+
+/* Teal accent button */
+.btn--teal {
+  border-color: rgba(20, 241, 149, 0.35);
+  color: var(--teal);
+}
+.btn--teal:hover {
+  border-color: rgba(20, 241, 149, 0.6);
+  box-shadow: 0 0 24px rgba(20, 241, 149, 0.15);
+}
+
 .btn--phantom {
   --btn-bg: linear-gradient(180deg, #b6acf6, var(--phantom));
   --btn-ink: #1b1330;
@@ -186,10 +241,16 @@ img {
 }
 .btn--ghost {
   --btn-bg: transparent;
+  border-color: var(--line);
+}
+.btn--ghost:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(153, 69, 255, 0.15);
 }
 .btn--lg {
   font-size: 17px;
   padding: 16px 30px;
+  border-radius: 16px;
 }
 .btn--block {
   width: 100%;
@@ -211,21 +272,23 @@ img {
 }
 .toast {
   pointer-events: auto;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   color: var(--ink);
   padding: 12px 18px;
   border-radius: var(--r-md);
   box-shadow: var(--shadow-2);
   font-size: 14px;
   max-width: 90vw;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   animation: toast-in 0.25s ease;
 }
 .toast--success {
-  border-color: var(--success);
+  border-color: rgba(20, 241, 149, 0.4);
 }
 .toast--error {
-  border-color: var(--danger);
+  border-color: rgba(255, 77, 106, 0.4);
 }
 @keyframes toast-in {
   from {
@@ -261,4 +324,8 @@ img {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+.num {
+  font-family: var(--font-body) !important;
 }

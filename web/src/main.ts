@@ -53,16 +53,16 @@ function showGameScreen() {
 
 // ---- Game lifecycle ---------------------------------------------------------
 
-async function enterGame(multiplayer: boolean) {
+async function enterGame(multiplayer: boolean, guest = false) {
   // Wallet is required to play.
-  if (!appState.isConnected) {
+  if (!guest && !appState.isConnected) {
     const session = await wallet.connect();
     if (!session) {
       showToast('Connect your Phantom wallet to play.', 'error');
       return;
     }
   }
-  const session = appState.session;
+  const session = guest ? null : appState.session;
 
   // Bring up multiplayer first (best-effort). If it fails we fall back to solo.
   let seed = Math.floor((Date.now() % 2147483647));
@@ -90,6 +90,7 @@ async function enterGame(multiplayer: boolean) {
     seed,
     multiplayer: mp,
     skin: 0,
+    guest,
   });
 
   // Bridge game <-> net: local transforms out, remote players in.
@@ -104,7 +105,7 @@ async function enterGame(multiplayer: boolean) {
   }
 
   // Top HUD bar (wallet chip, live player count, exit).
-  disposeTopbar = mountGameTopbar(hudEl, { multiplayer: mp });
+  disposeTopbar = mountGameTopbar(hudEl, { multiplayer: mp, guest });
   bus.emit('game:ready', undefined);
 }
 
@@ -121,11 +122,22 @@ function exitGame() {
 
 // ---- Wire events ------------------------------------------------------------
 
-bus.on('game:enter', ({ multiplayer }) => {
-  enterGame(multiplayer).catch((err) => {
+bus.on('game:enter', ({ multiplayer, guest }) => {
+  enterGame(multiplayer, !!guest).catch((err) => {
     console.error('[main] enterGame failed', err);
     showToast('Failed to start game.', 'error');
     exitGame();
+  });
+});
+
+bus.on('wallet:connect-request', () => {
+  wallet.connect().then((session) => {
+    if (session) {
+      exitGame();
+      enterGame(true, false).catch((err) => {
+        console.error('[main] enterGame after wallet connect failed', err);
+      });
+    }
   });
 });
 

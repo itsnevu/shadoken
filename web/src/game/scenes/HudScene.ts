@@ -9,7 +9,7 @@ import Phaser from 'phaser';
 import { VIEW } from '../../config';
 import { REG, type HudData, type VirtualInput } from '../shared';
 
-const FONT = 'Trebuchet MS, system-ui, sans-serif';
+const FONT = 'Poppins, Trebuchet MS, system-ui, sans-serif';
 
 export class HudScene extends Phaser.Scene {
   private input$!: VirtualInput;

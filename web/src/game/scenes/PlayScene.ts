@@ -24,7 +24,7 @@ import { REG, type HudData, type NetBridge, type VirtualInput } from '../shared'
 const SWARM = 24;
 const SKINS = [0xffffff, 0xff8a70, 0x9fe0ff, 0xffd27f, 0xc4a0ff, 0x8effb0, 0xff9fd0];
 const SNAPSHOT_MS = 66; // ~15 Hz
-const FONT = 'Trebuchet MS, system-ui, sans-serif';
+const FONT = 'Poppins, Trebuchet MS, system-ui, sans-serif';
 
 export class PlayScene extends Phaser.Scene {
   private opts!: GameLaunchOptions;
@@ -50,6 +50,10 @@ export class PlayScene extends Phaser.Scene {
   // nausea (rotation limiter)
   private nausea = 0;
   private nauseous = false;
+
+  // guest mode
+  private guestTimeLeft = 30;
+  private guestLimitReached = false;
 
   // scoring / state
   private score = 0;
@@ -96,6 +100,11 @@ export class PlayScene extends Phaser.Scene {
     this.prevChambers = 0;
     this.over = false;
     this.startedAt = this.time.now;
+    this.guestTimeLeft = 30;
+    this.guestLimitReached = false;
+    if (this.opts.guest) {
+      bus.emit('game:guest-time', Math.ceil(this.guestTimeLeft));
+    }
 
     // ---- physics groups ----
     this.platforms = this.physics.add.staticGroup();
@@ -176,9 +185,19 @@ export class PlayScene extends Phaser.Scene {
     if (this.over) return;
     const dt = Math.min(deltaMs / 1000, 1 / 30);
 
+    // ----- guest time limit ticker -----
+    if (this.opts.guest && !this.guestLimitReached) {
+      this.guestTimeLeft -= dt;
+      bus.emit('game:guest-time', Math.max(0, Math.ceil(this.guestTimeLeft)));
+      if (this.guestTimeLeft <= 0) {
+        this.guestLimitReached = true;
+        this.showGuestLimitModal();
+      }
+    }
+
     // ----- resolve input -----
     let moveDir = 0;
-    if (!this.nauseous) {
+    if (!this.nauseous && !this.guestLimitReached) {
       const left = this.input$.left || this.isDown(this.keyLeft) || this.isDown(this.keyA);
       const right = this.input$.right || this.isDown(this.keyRight) || this.isDown(this.keyD);
       moveDir = (right ? 1 : 0) - (left ? 1 : 0);
@@ -196,8 +215,8 @@ export class PlayScene extends Phaser.Scene {
     }
     if (moveDir !== 0) this.lastMoveDir = moveDir;
 
-    if (this.jumpQueued && !this.nauseous) this.doJump();
-    if (this.rotateQueued && !this.nauseous) this.doRotate(this.lastMoveDir);
+    if (this.jumpQueued && !this.nauseous && !this.guestLimitReached) this.doJump();
+    if (this.rotateQueued && !this.nauseous && !this.guestLimitReached) this.doRotate(this.lastMoveDir);
     this.jumpQueued = false;
     this.rotateQueued = false;
 
@@ -523,6 +542,49 @@ export class PlayScene extends Phaser.Scene {
     });
 
     panel.add([bg, card, title, scoreT, meta, restart, exit]);
+  }
+
+  private showGuestLimitModal(): void {
+    this.scene.bringToTop();
+    const cam = this.cameras.main;
+    const cx = cam.midPoint.x;
+    const cy = cam.midPoint.y;
+    // Undo camera rotation for a readable overlay.
+    const panel = this.add.container(cx, cy).setDepth(200).setRotation(-this.camAngle);
+
+    const bg = this.add.rectangle(0, 0, VIEW.width, VIEW.height, 0x0c0e11, 0.85);
+    bg.setInteractive();
+    const card = this.add.rectangle(0, 0, 440, 320, 0x1b1f24, 1).setStrokeStyle(2, 0xe23b2e, 1);
+
+    const title = this.add
+      .text(0, -95, 'DEMO LIMIT REACHED', { fontFamily: FONT, fontSize: '30px', fontStyle: 'bold', color: '#ff5a3c' })
+      .setOrigin(0.5);
+
+    const msg = this.add
+      .text(0, -30, 'Connect your Phantom wallet\nto unlock the full game and\nplay real-time multiplayer!', {
+        fontFamily: FONT,
+        fontSize: '16px',
+        color: '#ffffff',
+        align: 'center',
+      })
+      .setOrigin(0.5);
+
+    const scoreT = this.add
+      .text(0, 35, `Demo Score: ${this.score}`, {
+        fontFamily: FONT,
+        fontSize: '15px',
+        color: '#b6bfc9',
+      })
+      .setOrigin(0.5);
+
+    const connectBtn = this.makeOverlayButton(0, 80, 'CONNECT PHANTOM', 0xab9ff2, () => {
+      bus.emit('wallet:connect-request', undefined);
+    });
+    const exit = this.makeOverlayButton(0, 135, 'EXIT TO MENU', 0x2e353e, () => {
+      bus.emit('game:exit', undefined);
+    });
+
+    panel.add([bg, card, title, msg, scoreT, connectBtn, exit]);
   }
 
   private makeOverlayButton(

@@ -84,6 +84,7 @@ export interface GameLaunchOptions {
   seed: number;
   multiplayer: boolean;
   skin: number;
+  guest?: boolean;
 }
 
 /** Public surface of the game module (implemented by src/game). */

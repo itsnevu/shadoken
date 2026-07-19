@@ -1,6 +1,6 @@
 /* ==========================================================================
    Wallet UI — connect button, connected chip + dropdown, install modal.
-   Extends the global tokens in style.css (molten-red + Phantom purple).
+   Extends the global tokens in style.css (Solana purple + Phantom).
    ========================================================================== */
 
 .wallet-slot {
@@ -37,7 +37,7 @@
   border: 1px solid var(--line);
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
   color: var(--ink);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 0.01em;
@@ -114,7 +114,7 @@
 }
 .wallet-menu__bal {
   padding: 4px 10px 10px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 15px;
   color: var(--gold);
@@ -157,7 +157,7 @@
   color: var(--accent);
 }
 .wallet-menu__item--danger:hover {
-  background: rgba(226, 59, 46, 0.12);
+  background: rgba(153, 69, 255, 0.12);
 }
 
 /* ---- Install modal ---- */
@@ -169,7 +169,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(8, 9, 11, 0.72);
+  background: rgba(14, 11, 26, 0.78);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: wallet-fade 0.2s ease;

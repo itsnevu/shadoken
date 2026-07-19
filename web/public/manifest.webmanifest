@@ -1,7 +1,7 @@
 {
-  "name": "Shadoken — Numerous Ninjas",
+  "name": "Shadoken",
   "short_name": "Shadoken",
-  "description": "Command a school of ninjas across endless gravity-bending chambers. Connect Phantom and race friends in real-time multiplayer. Web3 · PWA · Mobile.",
+  "description": "Shadoken",
   "id": "/",
   "start_url": "./",
   "scope": "./",

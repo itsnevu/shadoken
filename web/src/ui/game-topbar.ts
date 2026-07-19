@@ -7,6 +7,7 @@ import { appState } from '../app-state';
 
 interface TopbarOptions {
   multiplayer: boolean;
+  guest?: boolean;
 }
 
 export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => void {
@@ -24,6 +25,7 @@ export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => v
       <span class="gt-status-text">${opts.multiplayer ? 'Arena' : 'Solo'}</span>
       <span class="gt-count" hidden>0</span>
     </div>
+    ${opts.guest ? '<div class="gt-guest-timer">DEMO: 30s</div>' : ''}
     <div class="gt-wallet" title="${session?.address ?? ''}">
       <span class="gt-wallet-ic">◈</span>
       <span class="gt-wallet-addr">${walletLabel}</span>
@@ -37,6 +39,7 @@ export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => v
 
   const countEl = bar.querySelector('.gt-count') as HTMLElement;
   const dot = bar.querySelector('.gt-dot') as HTMLElement;
+  const guestTimerEl = bar.querySelector('.gt-guest-timer') as HTMLElement | null;
 
   const offPlayers = bus.on('net:players', (players) => {
     const n = players.length;
@@ -47,10 +50,18 @@ export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => v
     dot.dataset.status = status;
   });
 
+  let offGuestTime = () => {};
+  if (opts.guest && guestTimerEl) {
+    offGuestTime = bus.on('game:guest-time', (sec) => {
+      guestTimerEl.textContent = `DEMO: ${sec}s`;
+    });
+  }
+
   return () => {
     exitBtn.removeEventListener('click', onExit);
     offPlayers();
     offStatus();
+    offGuestTime();
     bar.remove();
   };
 }

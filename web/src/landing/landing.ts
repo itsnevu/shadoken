@@ -15,8 +15,6 @@
 import './landing.css';
 import { bus } from '../events';
 
-const GITHUB_URL = 'https://github.com/itsnevu/shadoken';
-
 // ---- Small building blocks --------------------------------------------------
 
 interface Feature {
@@ -158,7 +156,6 @@ function markup(): string {
         <a href="#lp-features" data-scroll data-nav-link>Features</a>
         <a href="#lp-how" data-scroll data-nav-link>How to Play</a>
         <a href="#lp-roadmap" data-scroll data-nav-link>Roadmap</a>
-        <a href="${GITHUB_URL}" target="_blank" rel="noopener" data-nav-link>GitHub</a>
       </nav>
 
       <div class="lp-nav__actions">
@@ -187,11 +184,25 @@ function markup(): string {
 }
 
 function backdrop(): string {
+  // Generate 12 floating particles
+  const particles = Array.from({ length: 12 }, (_, i) => {
+    const size = 3 + Math.random() * 5;
+    const left = Math.random() * 100;
+    const top = Math.random() * 200;
+    const delay = (Math.random() * 8).toFixed(1);
+    const dur = (12 + Math.random() * 10).toFixed(1);
+    const hue = Math.random() > 0.5 ? 'var(--accent)' : 'var(--teal)';
+    return `<span class="lp-particle" style="--sz:${size}px;left:${left}%;top:${top}vh;animation-delay:-${delay}s;animation-duration:${dur}s;--clr:${hue}" data-i="${i}"></span>`;
+  }).join('');
+
   return `
   <div class="lp-bg" aria-hidden="true">
+    <div class="lp-bg__noise"></div>
     <div class="lp-bg__glow lp-bg__glow--red"></div>
     <div class="lp-bg__glow lp-bg__glow--purple"></div>
+    <div class="lp-bg__glow lp-bg__glow--center"></div>
     <div class="lp-bg__grid"></div>
+    ${particles}
     <div class="lp-blade lp-blade--a" data-parallax="0.10">${bladeSvg()}</div>
     <div class="lp-blade lp-blade--b" data-parallax="0.18">${bladeSvg()}</div>
     <div class="lp-blade lp-blade--c" data-parallax="0.06">${bladeSvg()}</div>
@@ -207,11 +218,12 @@ function hero(): string {
       <div class="lp-hero__copy reveal">
         <span class="lp-badge">
           <span class="lp-badge__dot"></span>
+          <span class="lp-badge__solana">◎</span>
           Powered by Solana &middot; Phantom
         </span>
         <h1 class="lp-hero__title">
-          Command a <span class="lp-hl">swarm of 42 ninjas</span>
-          through gravity-bending chambers.
+          Command a <span class="lp-hl">swarm of <span class="num">42</span> ninjas</span>
+          through gravity‑bending chambers.
         </h1>
         <p class="lp-hero__sub">
           Shadoken is a Web3, real-time multiplayer arena. Flip the world 90&deg;,
@@ -219,23 +231,27 @@ function hero(): string {
           seeded chambers. Free to play. Yours to install.
         </p>
         <div class="lp-hero__cta">
-          <button class="btn btn--primary btn--lg" data-enter="mp">
+          <button class="btn btn--primary btn--lg btn--glow" data-enter="mp">
             ${icoPlay()} Enter the Arena
           </button>
           <button class="btn btn--ghost btn--lg" data-enter="solo">
             Practice Solo
           </button>
+          <button class="btn btn--ghost btn--lg btn--teal" data-enter="guest">
+            Spectate as Guest (30s)
+          </button>
         </div>
         <ul class="lp-hero__stats">
-          <li><strong>42</strong><span>ninjas / swarm</span></li>
-          <li><strong>&#8734;</strong><span>chambers</span></li>
-          <li><strong>90&deg;</strong><span>gravity flips</span></li>
-          <li><strong>0</strong><span>gas to play</span></li>
+          <li class="lp-stat-card"><strong>42</strong><span>ninjas / swarm</span></li>
+          <li class="lp-stat-card"><strong>&#8734;</strong><span>chambers</span></li>
+          <li class="lp-stat-card"><strong>90&deg;</strong><span>gravity flips</span></li>
+          <li class="lp-stat-card"><strong>0</strong><span>gas to play</span></li>
         </ul>
       </div>
 
       <div class="lp-hero__art reveal" aria-hidden="true">
         <div class="lp-hero__logo-wrap">
+          <div class="lp-hero__orbit"></div>
           <div class="lp-hero__ring"></div>
           <img class="lp-hero__logo" src="/logo.png" alt="" width="600" height="315" loading="eager" decoding="async" />
         </div>
@@ -395,8 +411,9 @@ function cta(): string {
       <h2>Your school is waiting.</h2>
       <p>Connect your wallet and pour 42 ninjas into the arena. Free on devnet — no gas, no catch.</p>
       <div class="lp-cta__btns">
-        <button class="btn btn--primary btn--lg" data-enter="mp">${icoPlay()} Enter the Arena</button>
+        <button class="btn btn--primary btn--lg btn--glow" data-enter="mp">${icoPlay()} Enter the Arena</button>
         <button class="btn btn--ghost btn--lg" data-enter="solo">Practice Solo</button>
+        <button class="btn btn--ghost btn--lg btn--teal" data-enter="guest">Spectate as Guest (30s)</button>
       </div>
     </div>
   </section>`;
@@ -417,7 +434,6 @@ function footer(): string {
         <a href="#lp-how" data-scroll>How to Play</a>
         <a href="#lp-roadmap" data-scroll>Roadmap</a>
         <a href="#lp-faq" data-scroll>FAQ</a>
-        <a href="${GITHUB_URL}" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </div>
     <div class="lp-footer__base">
@@ -426,8 +442,7 @@ function footer(): string {
         &mdash; reborn for the web.
       </p>
       <p class="lp-footer__copy">
-        &copy; ${year} Shadoken &middot;
-        <a href="${GITHUB_URL}" target="_blank" rel="noopener">itsnevu/shadoken</a>
+        &copy; ${year} Shadoken
       </p>
     </div>
   </footer>`;
@@ -453,8 +468,10 @@ function wire(root: HTMLElement): void {
   // CTA buttons → bus events.
   root.querySelectorAll<HTMLButtonElement>('[data-enter]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const mp = btn.dataset.enter === 'mp';
-      bus.emit('game:enter', { multiplayer: mp });
+      const type = btn.dataset.enter;
+      const mp = type === 'mp' || type === 'guest';
+      const guest = type === 'guest';
+      bus.emit('game:enter', { multiplayer: mp, guest });
     });
   });
 
