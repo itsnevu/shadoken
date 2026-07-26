@@ -18,12 +18,32 @@ import { leaderboardDb } from './leaderboard-db.js';
 import { createRunClaim } from './run-claims.js';
 import { claimStatement, peekRunTicket } from './run-registry.js';
 import { tokenMetadata, tokenSvg } from './token-metadata.js';
+import { fixedWindowRateLimit, parseAllowedOrigins, requireBasicAuth } from './http-guards.js';
 
 const port = Number(process.env.PORT) || 2567;
 
 const app = express();
-app.use(cors());
+
+// Behind a reverse proxy (Caddy/nginx) set TRUST_PROXY to the hop count so
+// req.ip is the real client address — otherwise the rate limiter would lump
+// every player into the proxy's single bucket.
+const trustProxy = Number(process.env.TRUST_PROXY);
+if (Number.isInteger(trustProxy) && trustProxy > 0) app.set('trust proxy', trustProxy);
+
+// CORS_ORIGIN unset → allow any origin (dev). Set it in production.
+const allowedOrigins = parseAllowedOrigins(process.env.CORS_ORIGIN);
+app.use(cors(allowedOrigins ? { origin: allowedOrigins } : {}));
 app.use(express.json());
+
+// The claim endpoints do signature work and hand out signed value — cap the
+// request rate per client before anything else runs.
+app.use(
+  '/api/run-claim',
+  fixedWindowRateLimit({
+    limit: Math.max(1, Number(process.env.RUN_CLAIM_RATE_LIMIT_PER_MINUTE) || 30),
+    windowMs: 60_000,
+  }),
+);
 
 // High scores API.
 app.get('/api/leaderboard', (_req, res) => {
@@ -102,8 +122,16 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Dev/admin dashboard.
-app.use('/monitor', monitor());
+// Admin dashboard. Password-protected when MONITOR_PASSWORD is set; without a
+// password it only mounts outside production so the room inspector is never
+// exposed publicly by accident.
+const monitorPassword = process.env.MONITOR_PASSWORD;
+const monitorEnabled = Boolean(monitorPassword) || process.env.NODE_ENV !== 'production';
+if (monitorPassword) {
+  app.use('/monitor', requireBasicAuth(process.env.MONITOR_USER || 'admin', monitorPassword), monitor());
+} else if (monitorEnabled) {
+  app.use('/monitor', monitor());
+}
 
 const httpServer = createServer(app);
 
@@ -118,7 +146,12 @@ gameServer
   .then(() => {
     console.log(`Shadoken arena listening on ws://localhost:${port}`);
     console.log(`  health   → http://localhost:${port}/`);
-    console.log(`  monitor  → http://localhost:${port}/monitor`);
+    if (monitorEnabled) {
+      console.log(`  monitor  → http://localhost:${port}/monitor${monitorPassword ? ' (basic auth)' : ''}`);
+    } else {
+      console.log('  monitor  → disabled (set MONITOR_PASSWORD to enable in production)');
+    }
+    if (!allowedOrigins) console.log('  cors     → open to any origin (set CORS_ORIGIN in production)');
   })
   .catch((err) => {
     console.error('[server] failed to start', err);
