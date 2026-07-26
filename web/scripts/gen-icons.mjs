@@ -1,14 +1,17 @@
 // ============================================================================
-// Shadoken — PWA icon generator.
+// Shadoken — brand asset generator.
 //
-// Renders a bold shuriken / ninja emblem (molten-red on dark charcoal) to the
-// PNG icons referenced by public/manifest.webmanifest:
+// Single source of truth: ../../Assets/shadoken.png (square artwork). Every
+// derived asset is rendered from it so the logo, PWA icons and favicon can
+// never drift apart:
 //
+//   public/logo.png                      768x768  (landing hero)
+//   public/favicon.png                    64x64   (browser tab)
 //   public/icons/icon-192.png            192x192  (any)
 //   public/icons/icon-512.png            512x512  (any)
 //   public/icons/apple-touch-icon-180.png 180x180 (iOS home screen)
-//   public/icons/icon-512-maskable.png   512x512  (maskable, emblem in the
-//                                                   center ~72% safe zone)
+//   public/icons/icon-512-maskable.png   512x512  (maskable, artwork inside
+//                                                   the ~72% safe zone)
 //
 // Run from web/:  node scripts/gen-icons.mjs
 // ============================================================================
@@ -19,95 +22,49 @@ import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ICONS_DIR = join(__dirname, '..', 'public', 'icons');
+const PUBLIC_DIR = join(__dirname, '..', 'public');
+const ICONS_DIR = join(PUBLIC_DIR, 'icons');
+const SOURCE = join(__dirname, '..', '..', 'Assets', 'shadoken.png');
 
-const BG = '#16191d';
-const RED = '#e23b2e';
-const RED_BRIGHT = '#ff5a3c';
+// Backdrop for padded/maskable icons — sampled from the artwork's own lime
+// field so the maskable safe-zone padding is invisible.
+const BG = { r: 211, g: 246, b: 12, alpha: 1 };
 
 /**
- * Build the emblem SVG for a square canvas of `size` px.
- * `scale` (0..1) is the fraction of the canvas the emblem spans — smaller for
- * maskable icons so the star sits fully inside the safe zone.
- * `rounded` draws a rounded-rect plate; maskable uses a full-bleed background.
+ * Render the source artwork to `size`, optionally inset so it survives a
+ * maskable crop. `inset` is the fraction of the canvas the artwork spans.
  */
-function emblemSvg({ size, scale, rounded }) {
-  const c = size / 2;
-  // Outer radius of the blades, in px from center.
-  const r = (size * scale) / 2;
-  const inner = r * 0.27; // waist of each blade
-  const hub = r * 0.25; // dark central hub
-  const hubDot = r * 0.1;
+async function render({ size, inset = 1, out }) {
+  const art = Math.round(size * inset);
+  let pipeline = sharp(SOURCE).resize(art, art, { fit: 'contain', background: BG });
 
-  // Four-point star polygon (points up), centered at origin.
-  const star = [
-    [0, -r],
-    [inner, -inner],
-    [r, 0],
-    [inner, inner],
-    [0, r],
-    [-inner, inner],
-    [-r, 0],
-    [-inner, -inner],
-  ]
-    .map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`)
-    .join(' L ');
-  const starPath = `M ${star} Z`;
+  if (art !== size) {
+    const pad = Math.round((size - art) / 2);
+    pipeline = pipeline.extend({ top: pad, bottom: pad, left: pad, right: pad, background: BG });
+  }
 
-  const plate = rounded
-    ? `<rect width="${size}" height="${size}" rx="${size * 0.22}" fill="${BG}"/>`
-    : `<rect width="${size}" height="${size}" fill="${BG}"/>`;
-
-  return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-      <defs>
-        <radialGradient id="glow" cx="50%" cy="42%" r="65%">
-          <stop offset="0%" stop-color="${RED_BRIGHT}"/>
-          <stop offset="100%" stop-color="${RED}"/>
-        </radialGradient>
-      </defs>
-      ${plate}
-      <g transform="translate(${c} ${c})">
-        <g fill="url(#glow)">
-          <path d="${starPath}"/>
-          <path d="${starPath}" transform="rotate(45)" opacity="0.9"/>
-        </g>
-        <circle r="${hub.toFixed(2)}" fill="${BG}"/>
-        <circle r="${hubDot.toFixed(2)}" fill="${RED}"/>
-      </g>
-    </svg>`,
-    'utf8',
-  );
-}
-
-async function render({ size, scale, rounded, file }) {
-  const svg = emblemSvg({ size, scale, rounded });
-  const out = join(ICONS_DIR, file);
-  // Render the SVG at high density for crisp edges, then downscale to the
-  // exact target dimensions.
-  await sharp(svg, { density: 384 })
-    .resize(size, size, { fit: 'cover' })
-    .png({ compressionLevel: 9 })
-    .toFile(out);
-  return file;
+  await pipeline.png({ compressionLevel: 9 }).toFile(out);
+  return out;
 }
 
 async function main() {
   await mkdir(ICONS_DIR, { recursive: true });
 
   const jobs = [
-    { size: 192, scale: 0.78, rounded: true, file: 'icon-192.png' },
-    { size: 512, scale: 0.78, rounded: true, file: 'icon-512.png' },
-    { size: 180, scale: 0.78, rounded: true, file: 'apple-touch-icon-180.png' },
-    // Maskable: emblem inside the ~72% safe zone, full-bleed dark background.
-    { size: 512, scale: 0.56, rounded: false, file: 'icon-512-maskable.png' },
+    { size: 768, out: join(PUBLIC_DIR, 'logo.png') },
+    { size: 64, out: join(PUBLIC_DIR, 'favicon.png') },
+    { size: 192, out: join(ICONS_DIR, 'icon-192.png') },
+    { size: 512, out: join(ICONS_DIR, 'icon-512.png') },
+    { size: 180, out: join(ICONS_DIR, 'apple-touch-icon-180.png') },
+    // Maskable: artwork inside the ~72% safe zone on a full-bleed background.
+    { size: 512, inset: 0.72, out: join(ICONS_DIR, 'icon-512-maskable.png') },
   ];
 
   for (const job of jobs) {
-    const name = await render(job);
-    console.log(`  ✓ ${name}  (${job.size}x${job.size})`);
+    await render(job);
+    console.log(`  ✓ ${job.out.replace(PUBLIC_DIR, 'public')}  (${job.size}x${job.size})`);
   }
-  console.log('Icons written to public/icons/');
+  console.log('Brand assets written from Assets/shadoken.png');
 }
 
 main().catch((err) => {

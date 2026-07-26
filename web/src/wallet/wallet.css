@@ -1,6 +1,6 @@
 /* ==========================================================================
    Wallet UI — connect button, connected chip + dropdown, install modal.
-   Extends the global tokens in style.css (Solana purple + Phantom).
+   Extends the global RobinhoodChain tokens in style.css.
    ========================================================================== */
 
 .wallet-slot {
@@ -17,8 +17,8 @@
   line-height: 1;
 }
 .wallet-spinner {
-  border-top-color: #1b1330;
-  border-color: rgba(27, 19, 48, 0.35);
+  border-top-color: var(--warm-black);
+  border-color: rgba(28, 24, 13, 0.35);
 }
 
 /* ---- Connected chip ---- */
@@ -45,17 +45,17 @@
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
 }
 .wallet-chip:hover {
-  border-color: var(--phantom);
-  box-shadow: 0 0 0 3px rgba(171, 159, 242, 0.16);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(204, 255, 0, 0.16);
 }
 .wallet-chip:active {
   transform: translateY(1px);
 }
 .wallet-chip__icon {
-  color: var(--phantom);
+  color: var(--accent);
   font-size: 15px;
   line-height: 1;
-  filter: drop-shadow(0 0 6px rgba(171, 159, 242, 0.55));
+  filter: drop-shadow(0 0 6px rgba(204, 255, 0, 0.55));
 }
 .wallet-chip__addr {
   font-variant-ligatures: none;
@@ -106,9 +106,9 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--phantom);
-  background: rgba(171, 159, 242, 0.12);
-  border: 1px solid rgba(171, 159, 242, 0.3);
+  color: var(--accent);
+  background: rgba(204, 255, 0, 0.12);
+  border: 1px solid rgba(204, 255, 0, 0.3);
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -157,7 +157,7 @@
   color: var(--accent);
 }
 .wallet-menu__item--danger:hover {
-  background: rgba(153, 69, 255, 0.12);
+  background: rgba(204, 255, 0, 0.12);
 }
 
 /* ---- Install modal ---- */
@@ -169,7 +169,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(14, 11, 26, 0.78);
+  background: rgba(28, 24, 13, 0.78);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: wallet-fade 0.2s ease;
@@ -184,7 +184,7 @@
   width: 100%;
   max-width: 420px;
   background:
-    radial-gradient(120% 90% at 50% -20%, rgba(171, 159, 242, 0.16), transparent 60%),
+    radial-gradient(120% 90% at 50% -20%, rgba(204, 255, 0, 0.16), transparent 60%),
     var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
@@ -229,11 +229,11 @@
   align-items: center;
   justify-content: center;
   font-size: 30px;
-  color: var(--phantom);
-  background: rgba(171, 159, 242, 0.12);
-  border: 1px solid rgba(171, 159, 242, 0.35);
+  color: var(--accent);
+  background: rgba(204, 255, 0, 0.12);
+  border: 1px solid rgba(204, 255, 0, 0.35);
   border-radius: 18px;
-  box-shadow: 0 0 28px rgba(171, 159, 242, 0.28);
+  box-shadow: 0 0 28px rgba(204, 255, 0, 0.28);
 }
 .wallet-modal__title {
   font-family: var(--font-display);

@@ -28,15 +28,29 @@ Other scripts:
 - `npm start` — run once (no watch)
 - `npm run build` — compile to `dist/`
 - `npm run typecheck` — `tsc --noEmit`
+- `npm test` — run-registry + run-claim suite (`node --test` via tsx)
 
 ### Environment
 
 - `PORT` — listen port (default `2567`).
+- `RUN_CLAIM_SIGNING_ENABLED=true` — explicit production guard before `/api/run-claim` signs anything.
+- `RUN_CLAIM_SIGNER_PRIVATE_KEY` — EVM private key that signs claimable run results.
+- `ROBINHOODCHAIN_CHAIN_ID` — numeric RobinhoodChain mainnet chain id used for EIP-712.
+- `ARENA_POOL_ADDRESS` — deployed `ShadokenArenaPool` address used for EIP-712.
+- `SEASON_ID` — season id embedded into signed run claims (default `1`).
+- `RUN_REWARD_WEI` — optional per-qualified-run reward paid by the pool contract (default `0`).
+- `RUN_CLAIM_TTL_SECONDS` — claim signature validity window (default `3600`).
+- `TOKEN_METADATA_BASE_URL` — public base URL used inside ERC1155 metadata image links.
 
 ## Endpoints
 
 - `GET /` — health JSON: `{ ok, name, rooms, ccu, uptime }`
 - `GET /monitor` — Colyseus dashboard (rooms & clients)
+- `GET /api/leaderboard` — top local high scores
+- `GET /api/run-claim/challenge?runId&wallet` — statement the player signs to prove wallet ownership
+- `POST /api/run-claim` — `{ runId, wallet, signature }` → server-signed EIP-712 claim for `ShadokenArenaPool`
+- `GET /api/metadata/:id.json` — ERC1155 metadata for badges/cosmetics
+- `GET /api/metadata/:id.svg` — generated RobinhoodChain-themed token image
 - `ws(s)://<host>:2567` — Colyseus WebSocket transport; room name **`arena`**
 
 ## Connect the web client
@@ -57,13 +71,27 @@ falls back to solo/offline play automatically.
 Client → server message **`input`** (mirrors `PlayerInputMessage`):
 
 ```ts
-{ x, y, angle, vx, vy, facing: 1 | -1, state, score, alive }
+{ x, y, angle, vx, vy, facing: 1 | -1, state, score, chambers, alive, sabotage? }
 ```
 
 Server → client:
 
 - Schema state sync (`ArenaState`: `seed`, `startedAt`, `players` map of `Player`)
 - Broadcast **`leaderboard`** — top 8 `{ sessionId, name, score, alive }`
+- Broadcast **`sabotage`** — relayed PvP power event from one client to the others.
+- Direct **`run-ticket`** — sent only to the client whose run just ended.
+
+### Run claims
+
+The arena is a relay, so a claim is never signed from numbers a client sends at
+claim time. On **`run-end`** (or disconnect) the room files the run from the
+state IT observed — monotonic score, chambers, server-clocked duration — and
+drops implausible runs outright. It replies with a single-use `run-ticket`
+(30 min TTL). The player then signs the challenge statement with their wallet
+and `POST /api/run-claim` signs EIP-712 over the server's own record.
+
+`npm test` covers the registry and the claim path (wallet-binding, single use,
+forged score rejection, signature mismatches).
 
 ## Files
 

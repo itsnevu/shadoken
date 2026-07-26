@@ -8,7 +8,7 @@ export class AudioSynthBgm {
   private isPlaying = false;
   private currentStep = 0;
 
-  // Chord progression (Solana theme: Am -> F -> C -> G)
+  // Chord progression for the RobinhoodChain arena pulse.
   private readonly chords = [
     [110.00, 220.00, 261.63, 329.63], // A2, A3, C4, E4
     [87.31, 174.61, 220.00, 261.63],  // F2, F3, A3, C4

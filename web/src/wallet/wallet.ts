@@ -1,30 +1,37 @@
 // ============================================================================
 // Public wallet API — the single surface main.ts (and the shell) imports.
-// Wraps the low-level Phantom provider glue in ./phantom.ts with session
+// Wraps the low-level MetaMask provider glue in ./metamask.ts with session
 // management, event-bus notifications and the connect-button UI.
 // ============================================================================
 
-import { SOLANA } from '../config';
+import { ROBINHOODCHAIN } from '../config';
 import { bus } from '../events';
 import { appState, shortenAddress } from '../app-state';
-import type { PhantomProvider, WalletSession } from '../types';
+import type { EthereumProvider, WalletSession } from '../types';
 import {
-  fetchLamports,
+  fetchBalanceWei,
+  getAccounts,
+  getChainId,
   getProvider,
-  isPhantomInstalled,
+  isMetaMaskInstalled,
   isUserRejection,
+  requestAccounts,
   signAuthStatement,
-} from './phantom';
+  switchToRobinhoodChain,
+} from './metamask';
 import { openInstallModal, mountConnectButton } from './wallet-ui';
 
 // Provider-level listeners are registered once; keep references so they can be
 // swapped if the provider re-injects (rare, but keeps us leak-free).
-let boundProvider: PhantomProvider | null = null;
+let boundProvider: EthereumProvider | null = null;
 let handleConnect: ((arg: unknown) => void) | null = null;
 let handleDisconnect: ((arg: unknown) => void) | null = null;
 let handleAccountChanged: ((arg: unknown) => void) | null = null;
+let handleChainChanged: ((arg: unknown) => void) | null = null;
 
 function extractAddress(arg: unknown): string | null {
+  if (typeof arg === 'string' && arg.length > 0) return arg;
+  if (Array.isArray(arg) && typeof arg[0] === 'string' && arg[0].length > 0) return arg[0];
   if (arg && typeof arg === 'object' && 'toString' in arg) {
     const s = (arg as { toString(): string }).toString();
     if (s && s !== '[object Object]') return s;
@@ -32,31 +39,31 @@ function extractAddress(arg: unknown): string | null {
   return null;
 }
 
-/** Refresh (best-effort, non-blocking) the cached lamports on the live session. */
-function hydrateBalance(address: string): void {
-  void fetchLamports(address).then((lamports) => {
-    if (lamports == null) return;
+/** Refresh (best-effort, non-blocking) the cached native balance on the live session. */
+function hydrateBalance(provider: EthereumProvider, address: string): void {
+  void fetchBalanceWei(provider, address).then((balanceWei) => {
+    if (balanceWei == null) return;
     const current = appState.session;
     if (!current || current.address !== address) return;
-    const updated = { ...current, lamports };
+    const updated = { ...current, balanceWei };
     appState.setSession(updated);
     bus.emit('wallet:connected', updated);
   });
 }
 
-function bindProviderListeners(provider: PhantomProvider): void {
+function bindProviderListeners(provider: EthereumProvider): void {
   if (boundProvider === provider) return;
   // Detach from a stale provider first.
   if (boundProvider) {
-    if (handleConnect) boundProvider.removeListener('connect', handleConnect);
-    if (handleDisconnect) boundProvider.removeListener('disconnect', handleDisconnect);
-    if (handleAccountChanged) boundProvider.removeListener('accountChanged', handleAccountChanged);
+    if (handleConnect) boundProvider.removeListener?.('connect', handleConnect);
+    if (handleDisconnect) boundProvider.removeListener?.('disconnect', handleDisconnect);
+    if (handleAccountChanged) boundProvider.removeListener?.('accountsChanged', handleAccountChanged);
+    if (handleChainChanged) boundProvider.removeListener?.('chainChanged', handleChainChanged);
   }
 
   handleConnect = (arg: unknown) => {
-    // Trust an existing signed session; only hydrate the balance here.
-    const addr = extractAddress(arg) ?? provider.publicKey?.toString() ?? null;
-    if (addr) hydrateBalance(addr);
+    const addr = extractAddress(arg) ?? provider.selectedAddress ?? null;
+    if (addr) hydrateBalance(provider, addr);
   };
 
   handleDisconnect = () => {
@@ -69,7 +76,6 @@ function bindProviderListeners(provider: PhantomProvider): void {
   handleAccountChanged = (arg: unknown) => {
     const addr = extractAddress(arg);
     if (!addr) {
-      // Phantom passes a falsy value when the user disconnects the account.
       if (appState.session) {
         appState.setSession(null);
         bus.emit('wallet:disconnected', undefined);
@@ -84,30 +90,34 @@ function bindProviderListeners(provider: PhantomProvider): void {
     }
   };
 
-  provider.on('connect', handleConnect);
-  provider.on('disconnect', handleDisconnect);
-  provider.on('accountChanged', handleAccountChanged);
+  handleChainChanged = (arg: unknown) => {
+    const current = appState.session;
+    if (!current || typeof arg !== 'string') return;
+    appState.setSession({ ...current, chainId: arg, network: 'robinhoodchain' });
+  };
+
+  provider.on?.('connect', handleConnect);
+  provider.on?.('disconnect', handleDisconnect);
+  provider.on?.('accountsChanged', handleAccountChanged);
+  provider.on?.('chainChanged', handleChainChanged);
   boundProvider = provider;
 }
 
-async function eagerReconnect(provider: PhantomProvider): Promise<void> {
+async function eagerReconnect(provider: EthereumProvider): Promise<void> {
   const stored = appState.session;
   if (!stored) return;
   try {
-    const { publicKey } = await provider.connect({ onlyIfTrusted: true });
-    const address = publicKey.toString();
-    if (address === stored.address) {
-      // Still trusted & same account — keep the persisted session, refresh HUD.
-      appState.setSession({ ...stored, network: SOLANA.network });
-      hydrateBalance(address);
+    const accounts = await getAccounts(provider);
+    const address = accounts[0] ?? null;
+    if (address && address.toLowerCase() === stored.address.toLowerCase()) {
+      const chainId = await getChainId(provider).catch(() => stored.chainId);
+      appState.setSession({ ...stored, address, shortAddress: shortenAddress(address), network: 'robinhoodchain', chainId });
+      hydrateBalance(provider, address);
     } else {
-      // Different account is trusted now — drop the stale session silently.
       appState.setSession(null);
     }
   } catch {
-    // Not trusted anymore (or user cleared the connection). Leave the stored
-    // session in place — the shell treats it as "connected" for UX, and the
-    // next explicit action will re-trigger a full connect if needed.
+    appState.setSession(null);
   }
 }
 
@@ -121,7 +131,7 @@ export const wallet = {
   },
 
   /**
-   * Full connect flow: detect Phantom, connect, sign the auth statement and
+   * Full connect flow: detect MetaMask, connect, sign the auth statement and
    * establish a persisted session. Resolves to null on any failure or if the
    * user rejects — never throws.
    */
@@ -132,22 +142,27 @@ export const wallet = {
     if (!provider) {
       const modalRoot = document.getElementById('wallet-modal-root');
       if (modalRoot) openInstallModal(modalRoot);
-      bus.emit('wallet:error', { message: 'Phantom wallet not found.' });
+      bus.emit('wallet:error', { message: 'MetaMask wallet not found.' });
       return null;
     }
 
     bindProviderListeners(provider);
 
     try {
-      const { publicKey } = await provider.connect();
-      const address = publicKey.toString();
+      await switchToRobinhoodChain(provider);
+      const accounts = await requestAccounts(provider);
+      const address = accounts[0];
+      if (!address) throw new Error('No MetaMask account selected.');
+      const chainId = await getChainId(provider).catch(() => ROBINHOODCHAIN.chainId || undefined);
 
-      const signature = await signAuthStatement(provider);
+      const signature = await signAuthStatement(provider, address);
 
       const session: WalletSession = {
         address,
         shortAddress: shortenAddress(address),
-        network: SOLANA.network,
+        network: 'robinhoodchain',
+        walletKind: 'metamask',
+        chainId,
         connectedAt: Date.now(),
         signature,
       };
@@ -155,8 +170,7 @@ export const wallet = {
       appState.setSession(session);
       bus.emit('wallet:connected', session);
 
-      // Non-blocking cosmetic balance.
-      hydrateBalance(address);
+      hydrateBalance(provider, address);
 
       return session;
     } catch (err) {
@@ -164,7 +178,7 @@ export const wallet = {
         ? 'Wallet connection was cancelled.'
         : err instanceof Error && err.message
           ? err.message
-          : 'Could not connect to Phantom.';
+          : 'Could not connect to MetaMask.';
       bus.emit('wallet:error', { message });
       bus.emit('toast', { message, kind: 'error' });
       return null;
@@ -173,24 +187,17 @@ export const wallet = {
 
   /** Disconnect the provider and clear the persisted session. */
   async disconnect(): Promise<void> {
-    const provider = getProvider();
-    try {
-      if (provider) await provider.disconnect();
-    } catch (err) {
-      console.warn('[wallet] provider disconnect failed', err);
-    } finally {
-      appState.setSession(null);
-      bus.emit('wallet:disconnected', undefined);
-    }
+    appState.setSession(null);
+    bus.emit('wallet:disconnected', undefined);
   },
 
-  /** Is Phantom currently injected into the page? */
+  /** Is MetaMask currently injected into the page? */
   installed(): boolean {
-    return isPhantomInstalled();
+    return isMetaMaskInstalled();
   },
 
-  /** The live provider, or null when Phantom is not installed. */
-  provider(): PhantomProvider | null {
+  /** The live provider, or null when MetaMask is not installed. */
+  provider(): EthereumProvider | null {
     return getProvider();
   },
 

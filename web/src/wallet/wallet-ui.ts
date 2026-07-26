@@ -1,20 +1,30 @@
 // ============================================================================
 // Wallet UI: the connect button / connected chip + dropdown, and the
-// "install Phantom" modal. Pure DOM, no framework. Reuses the global button
+// "install MetaMask" modal. Pure DOM, no framework. Reuses the global button
 // system and design tokens; component-specific styles live in ./wallet.css.
 // ============================================================================
 
 import './wallet.css';
 import { bus } from '../events';
 import { appState } from '../app-state';
+import { ROBINHOODCHAIN } from '../config';
 import type { WalletSession } from '../types';
 import { wallet } from './wallet';
-import { getProvider } from './phantom';
 
-const PHANTOM_DOWNLOAD_URL = 'https://phantom.app/download';
+const METAMASK_DOWNLOAD_URL = 'https://metamask.io/download/';
 
 function explorerUrl(address: string): string {
-  return `https://explorer.solana.com/address/${address}?cluster=devnet`;
+  if (ROBINHOODCHAIN.blockExplorerUrl) {
+    return `${ROBINHOODCHAIN.blockExplorerUrl.replace(/\/$/, '')}/address/${address}`;
+  }
+  return `https://etherscan.io/address/${address}`;
+}
+
+function formatNativeBalance(balanceWei: string): string {
+  const raw = balanceWei.startsWith('0x') ? BigInt(balanceWei) : BigInt(balanceWei || '0');
+  const whole = raw / 1_000_000_000_000_000_000n;
+  const frac = (raw % 1_000_000_000_000_000_000n).toString().padStart(18, '0').slice(0, 4);
+  return `${whole}.${frac.replace(/0+$/, '') || '0'} ${ROBINHOODCHAIN.nativeCurrencySymbol}`;
 }
 
 /** Copy text to the clipboard with a legacy fallback. Resolves to success. */
@@ -78,7 +88,7 @@ export function mountConnectButton(
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `btn btn--phantom wallet-connect-btn${variant === 'hero' ? ' btn--lg' : ''}`;
-    btn.setAttribute('aria-label', 'Connect Phantom wallet');
+    btn.setAttribute('aria-label', 'Connect MetaMask wallet');
     renderConnectLabel(btn);
 
     btn.addEventListener('click', () => {
@@ -112,7 +122,7 @@ export function mountConnectButton(
     icon.setAttribute('aria-hidden', 'true');
     icon.textContent = '◈';
     btn.appendChild(icon);
-    btn.appendChild(document.createTextNode('Connect Wallet'));
+    btn.appendChild(document.createTextNode('Connect MetaMask'));
   }
 
   function buildChip(session: WalletSession): HTMLElement {
@@ -170,11 +180,10 @@ export function mountConnectButton(
     header.append(full, net);
     menu.appendChild(header);
 
-    if (typeof session.lamports === 'number') {
+    if (typeof session.balanceWei === 'string') {
       const bal = document.createElement('div');
       bal.className = 'wallet-menu__bal';
-      const sol = session.lamports / 1_000_000_000;
-      bal.textContent = `${sol.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL`;
+      bal.textContent = formatNativeBalance(session.balanceWei);
       menu.appendChild(bal);
     }
 
@@ -260,12 +269,12 @@ export function mountConnectButton(
 }
 
 // ---------------------------------------------------------------------------
-// Install-Phantom modal
+// Install-MetaMask modal
 // ---------------------------------------------------------------------------
 
 let activeModalCleanup: (() => void) | null = null;
 
-/** Open the "install Phantom" modal into `root`. Idempotent. */
+/** Open the "install MetaMask" modal into `root`. Idempotent. */
 export function openInstallModal(root: HTMLElement): void {
   if (activeModalCleanup) return; // already open
 
@@ -292,22 +301,22 @@ export function openInstallModal(root: HTMLElement): void {
   const title = document.createElement('h2');
   title.className = 'wallet-modal__title';
   title.id = 'wallet-modal-title';
-  title.textContent = 'Phantom wallet required';
+  title.textContent = 'MetaMask wallet required';
 
   const body = document.createElement('p');
   body.className = 'wallet-modal__body';
   body.textContent =
-    'Shadoken uses Phantom to sign you in on Solana — no passwords, no gas. Install the Phantom browser extension (or app), then come back and retry.';
+    'Shadoken uses MetaMask to sign you in on RobinhoodChain — no passwords, no gas. Install the MetaMask browser extension or mobile app, then come back and retry.';
 
   const actions = document.createElement('div');
   actions.className = 'wallet-modal__actions';
 
   const install = document.createElement('a');
   install.className = 'btn btn--phantom btn--block';
-  install.href = PHANTOM_DOWNLOAD_URL;
+  install.href = METAMASK_DOWNLOAD_URL;
   install.target = '_blank';
   install.rel = 'noopener noreferrer';
-  install.textContent = 'Get Phantom';
+  install.textContent = 'Get MetaMask';
 
   const retry = document.createElement('button');
   retry.type = 'button';
@@ -335,11 +344,11 @@ export function openInstallModal(root: HTMLElement): void {
   document.addEventListener('keydown', onKey);
 
   retry.addEventListener('click', () => {
-    if (getProvider()) {
+    if (wallet.installed()) {
       cleanup();
       void wallet.connect();
     } else {
-      bus.emit('toast', { message: 'Still no Phantom detected.', kind: 'error' });
+      bus.emit('toast', { message: 'Still no MetaMask detected.', kind: 'error' });
     }
   });
 

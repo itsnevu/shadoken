@@ -12,12 +12,14 @@
 
 import { Client, getStateCallbacks, type Room } from 'colyseus.js';
 import { MULTIPLAYER } from '../config';
+import { bus } from '../events';
 import type {
   NetHandle,
   PlayerSnapshot,
   PlayerInputMessage,
   WalletSession,
   NinjaState,
+  RunTicket,
 } from '../types';
 
 type NetStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -45,6 +47,7 @@ interface RemotePlayerLike {
   facing?: number;
   state?: string;
   score?: number;
+  chambers?: number;
   alive?: boolean;
   skin?: number;
 }
@@ -81,6 +84,7 @@ function toSnapshot(sessionId: string, p: RemotePlayerLike): PlayerSnapshot {
     facing: p.facing === -1 ? -1 : 1,
     state: rawState as NinjaState,
     score: num(p.score),
+    chambers: num(p.chambers),
     alive: p.alive !== false,
     skin: num(p.skin) | 0,
   };
@@ -170,6 +174,13 @@ class NetClient implements NetHandle {
 
       room.onMessage('sabotage', (data: { type: string }) => {
         bus.emit('game:recv-sabotage', data.type);
+      });
+
+      // Private per-client message: the server filed our finished run and this
+      // is the only handle that can be turned into an on-chain claim.
+      room.onMessage('run-ticket', (ticket: RunTicket) => {
+        if (!ticket || typeof ticket.runId !== 'string') return;
+        bus.emit('run:ticket', ticket);
       });
 
       this.subscribePlayers(room);
@@ -268,6 +279,15 @@ class NetClient implements NetHandle {
       this.room.send('input', msg);
     } catch (err) {
       console.warn('[net] sendInput failed', err);
+    }
+  }
+
+  endRun(): void {
+    if (!this._connected || !this.room) return;
+    try {
+      this.room.send('run-end', {});
+    } catch (err) {
+      console.warn('[net] endRun failed', err);
     }
   }
 

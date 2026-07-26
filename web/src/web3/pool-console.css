@@ -1,0 +1,151 @@
+.pool-console {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 70;
+  font-family: var(--font-body);
+  color: var(--ink);
+  pointer-events: auto;
+}
+
+.pool-console__toggle {
+  appearance: none;
+  border: 1px solid rgba(204, 255, 0, 0.32);
+  background: linear-gradient(180deg, rgba(48, 42, 22, 0.94), rgba(28, 24, 13, 0.94));
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 11px 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 22px rgba(204, 255, 0, 0.12);
+}
+
+.pool-console__toggle.has-run {
+  background: var(--accent);
+  color: var(--warm-black);
+  border-color: var(--accent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 28px rgba(204, 255, 0, 0.34);
+}
+
+.pool-console__panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  width: min(360px, calc(100vw - 28px));
+  padding: 14px;
+  border: 1px solid rgba(204, 255, 0, 0.24);
+  border-radius: 14px;
+  background: rgba(28, 24, 13, 0.96);
+  box-shadow: var(--shadow-2);
+}
+
+.pool-console__panel[hidden] {
+  display: none;
+}
+
+.pool-console__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pool-console__title {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.pool-console__status {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pool-console__icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--accent);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.pool-console__icon:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pool-console__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pool-console label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+.pool-console input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 9px 10px;
+  font: inherit;
+}
+
+.pool-console__actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pool-console__actions button {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--ink);
+  padding: 10px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pool-console__actions button:hover {
+  border-color: var(--accent);
+}
+
+.pool-console__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pool-console__actions .is-primary {
+  background: var(--accent);
+  color: var(--warm-black);
+  border-color: var(--accent);
+}
+
+.pool-console__note {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+@media (max-width: 560px) {
+  .pool-console {
+    right: 10px;
+    bottom: 10px;
+  }
+}

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Shadoken (Numerous Ninjas) — Web3 multiplayer web game with Phantom wallet, PWA & mobile support",
+  "description": "Shadoken (Numerous Ninjas) — RobinhoodChain multiplayer web game with MetaMask wallet, PWA & mobile support",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -12,14 +12,16 @@
     "icons": "node scripts/gen-icons.mjs"
   },
   "dependencies": {
-    "@solana/web3.js": "^1.95.3",
     "colyseus.js": "^0.16.9",
     "phaser": "^3.87.0"
   },
   "devDependencies": {
-    "sharp": "^0.33.5",
+    "sharp": "^0.35.3",
     "typescript": "^5.6.3",
-    "vite": "^5.4.10",
-    "vite-plugin-pwa": "^0.20.5"
+    "vite": "^7.3.6",
+    "vite-plugin-pwa": "^1.2.0"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8"
   }
 }

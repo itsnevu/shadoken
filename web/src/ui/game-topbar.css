@@ -129,7 +129,7 @@
 }
 
 .gt-guest-timer {
-  background: rgba(153, 69, 255, 0.18);
+  background: rgba(204, 255, 0, 0.18);
   border: 1px solid var(--accent);
   color: var(--accent-bright);
   border-radius: 999px;

@@ -4,6 +4,7 @@
 import './game-topbar.css';
 import { bus } from '../events';
 import { appState } from '../app-state';
+import { ROBINHOODCHAIN } from '../config';
 import type { WalletSession } from '../types';
 import { audioSynthBgm } from '../game/systems/audio-synth';
 
@@ -52,9 +53,11 @@ export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => v
 
   const updateWalletDisplay = (session: WalletSession | null) => {
     if (session) {
-      const lamports = session.lamports;
-      const sol = typeof lamports === 'number' ? `(${(lamports / 1e9).toFixed(3)} SOL)` : '';
-      walletAddrEl.textContent = `${session.shortAddress} ${sol}`.trim();
+      const balance =
+        typeof session.balanceWei === 'string'
+          ? `(${(Number.parseInt(session.balanceWei, 16) / 1e18).toFixed(3)} ${ROBINHOODCHAIN.nativeCurrencySymbol})`
+          : '';
+      walletAddrEl.textContent = `${session.shortAddress} ${balance}`.trim();
       walletEl.title = session.address;
     } else {
       walletAddrEl.textContent = 'Guest';

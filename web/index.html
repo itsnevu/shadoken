@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#16191d" />
+    <meta name="theme-color" content="#CCFF00" />
     <meta name="description" content="Shadoken" />
 
     <!-- Google Fonts -->
@@ -16,7 +16,8 @@
 
     <!-- PWA / iOS -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+    <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -43,6 +44,7 @@
       </section>
 
       <!-- Portals for wallet modal + toasts -->
+      <div id="pool-console-root"></div>
       <div id="wallet-modal-root"></div>
       <div id="toast-root" aria-live="polite"></div>
     </div>

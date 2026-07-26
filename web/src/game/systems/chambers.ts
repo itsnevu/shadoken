@@ -219,28 +219,55 @@ export class ChamberManager {
       this.addWater(c, pcx - pw / 2, pcx + pw / 2, floorTop - 90, floorTop);
     }
 
-    // One hazard.
-    const hazard = this.rng.pick<HazardKind>(['saw', 'shooter', 'smasher', 'bounce', 'saw']);
-    switch (hazard) {
-      case 'saw':
-        this.addSaw(c, midX, floorTop - this.rng.between(30, 120));
-        break;
-      case 'smasher':
-        this.addSmasher(c, midX, floorTop);
-        break;
-      case 'bounce':
-        this.addBounce(c, midX, floorTop);
-        break;
-      case 'shooter':
-        this.addShooter(c, x0 + 70, midY, 1, 0);
-        break;
-      case 'lava':
-        break;
+    this.addRandomHazard(c, midX, midY, floorTop);
+    if (c.index >= 4 && this.rng.frac() < 0.45) {
+      this.addRandomHazard(c, x0 + this.rng.between(140, w - 140), midY, floorTop);
+    }
+    if (c.index >= 8 && this.rng.frac() < 0.25) {
+      this.addShooter(c, x0 + w - 70, midY + this.rng.between(-70, 70), -1, 0);
+    }
+    if (c.index > 0 && c.index % 5 === 0) {
+      this.addEliteGauntlet(c, x0, w, midY, floorTop);
     }
 
     // One pickup.
     const kind = this.rng.weightedPick<PickupKind>(['coin', 'coin', 'nitro', 'normous', 'normal', 'new', 'mystery']);
     this.addPickup(c, midX + this.rng.between(-120, 120), floorTop - this.rng.between(40, 150), kind);
+  }
+
+  private addRandomHazard(c: Chamber, x: number, midY: number, floorTop: number): void {
+    const hazard = this.rng.pick<HazardKind>(['saw', 'shooter', 'smasher', 'bounce', 'saw']);
+    switch (hazard) {
+      case 'saw':
+        this.addSaw(c, x, floorTop - this.rng.between(30, 120));
+        break;
+      case 'smasher':
+        this.addSmasher(c, x, floorTop);
+        break;
+      case 'bounce':
+        this.addBounce(c, x, floorTop);
+        break;
+      case 'shooter':
+        this.addShooter(c, x - 150, midY + this.rng.between(-60, 60), 1, 0);
+        break;
+      case 'lava':
+        break;
+    }
+  }
+
+  private addEliteGauntlet(c: Chamber, x0: number, w: number, midY: number, floorTop: number): void {
+    const laneA = x0 + w * 0.25;
+    const laneB = x0 + w * 0.5;
+    const laneC = x0 + w * 0.75;
+    this.addSaw(c, laneA, floorTop - 68);
+    this.addSaw(c, laneB, floorTop - 150);
+    this.addSaw(c, laneC, floorTop - 68);
+    this.addSmasher(c, laneB + 90, floorTop);
+    this.addShooter(c, x0 + 62, midY - 76, 1, 0);
+    this.addShooter(c, x0 + w - 62, midY + 76, -1, 0);
+    if (this.rng.frac() < 0.7) {
+      this.addLava(c, x0 + w * 0.38, x0 + w * 0.62);
+    }
   }
 
   // ---- object factories ----------------------------------------------------

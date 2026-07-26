@@ -4,7 +4,7 @@
 // Wires together the four subsystems built independently against the shared
 // contracts in ./types.ts and ./events.ts:
 //   - landing  (renderLanding)         — the marketing/entry screen
-//   - wallet   (wallet)                — Phantom connect + sign-in auth
+//   - wallet   (wallet)                — MetaMask connect + sign-in auth
 //   - game     (launchGame)            — the Phaser game
 //   - net      (createNetClient)       — Colyseus multiplayer
 //   - pwa      (registerServiceWorker) — installable / offline
@@ -24,11 +24,13 @@ import { registerServiceWorker } from './pwa/register-sw';
 import { mountGameTopbar } from './ui/game-topbar';
 import { mountGameLeaderboard } from './ui/game-leaderboard';
 import { showToast } from './ui/toast';
+import { mountPoolConsole } from './web3/pool-console';
 
 const landingEl = document.getElementById('screen-landing') as HTMLElement;
 const gameScreenEl = document.getElementById('screen-game') as HTMLElement;
 const gameRootEl = document.getElementById('game-root') as HTMLElement;
 const hudEl = document.getElementById('game-hud') as HTMLElement;
+const poolConsoleEl = document.getElementById('pool-console-root') as HTMLElement;
 
 let game: GameHandle | null = null;
 let net: NetHandle | null = null;
@@ -55,19 +57,27 @@ function showGameScreen() {
 
 // ---- Game lifecycle ---------------------------------------------------------
 
-async function enterGame(multiplayer: boolean, guest = false, skin = 0) {
+function dailySeed(): number {
+  const d = new Date();
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return (y * 10000 + m * 100 + day) % 2147483647;
+}
+
+async function enterGame(multiplayer: boolean, guest = false, skin = 0, daily = false) {
   // Wallet is required to play.
   if (!guest && !appState.isConnected) {
     const session = await wallet.connect();
     if (!session) {
-      showToast('Connect your Phantom wallet to play.', 'error');
+      showToast('Connect MetaMask to play on RobinhoodChain.', 'error');
       return;
     }
   }
   const session = guest ? null : appState.session;
 
   // Bring up multiplayer first (best-effort). If it fails we fall back to solo.
-  let seed = Math.floor((Date.now() % 2147483647));
+  let seed = daily ? dailySeed() : Math.floor((Date.now() % 2147483647));
   let mp = false;
   if (multiplayer && MULTIPLAYER.enabled) {
     try {
@@ -132,8 +142,8 @@ function exitGame() {
 
 // ---- Wire events ------------------------------------------------------------
 
-bus.on('game:enter', ({ multiplayer, guest, skin }) => {
-  enterGame(multiplayer, !!guest, skin).catch((err) => {
+bus.on('game:enter', ({ multiplayer, guest, skin, daily }) => {
+  enterGame(multiplayer, !!guest, skin, !!daily).catch((err) => {
     console.error('[main] enterGame failed', err);
     showToast('Failed to start game.', 'error');
     exitGame();
@@ -155,6 +165,9 @@ bus.on('game:exit', () => exitGame());
 
 bus.on('game:over', (result) => {
   appState.recordScore(result.score);
+  // Ask the server to file the run — it answers with a 'run-ticket' message,
+  // which is what the pool console turns into an on-chain claim.
+  net?.endRun();
   // The game shows its own game-over scene; net keeps running for the lobby.
 });
 
@@ -172,12 +185,13 @@ function boot() {
   registerServiceWorker();
   renderLanding(landingEl);
   wallet.init(); // eager reconnect + provider event listeners
-  // Mount the Phantom connect button into the landing nav slot.
+  // Mount the MetaMask connect button into the landing nav slot.
   const navSlot = document.getElementById('nav-wallet');
   if (navSlot) wallet.mountConnectButton(navSlot, { variant: 'nav' });
+  if (poolConsoleEl) mountPoolConsole(poolConsoleEl);
   appState.setScreen(appState.isConnected ? 'menu' : 'landing');
   // eslint-disable-next-line no-console
-  console.info('%cShadoken', 'color:#e23b2e;font-weight:bold', 'booted');
+  console.info('%cShadoken', 'color:#CCFF00;font-weight:bold', 'booted');
 }
 
 boot();

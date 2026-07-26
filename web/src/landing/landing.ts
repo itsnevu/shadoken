@@ -8,7 +8,7 @@
 //   - "Enter the Arena"  → bus.emit('game:enter', { multiplayer: true })
 //   - "Practice Solo"    → bus.emit('game:enter', { multiplayer: false })
 //
-// It renders an empty `#nav-wallet` slot; main.ts mounts the Phantom connect
+// It renders an empty `#nav-wallet` slot; main.ts mounts the MetaMask connect
 // button there. This module NEVER renders a connect button itself.
 // ============================================================================
 
@@ -42,13 +42,13 @@ const FEATURES: Feature[] = [
     icon: icoArena(),
     title: 'Real-time arena',
     body:
-      'Race live ghosts through the same seeded chambers. Everyone shares one world, one gravity, one countdown. Last swarm standing wins.',
+      'Race live ghosts through the same seeded chambers. Chamber 10 is the sprint target, live rank updates in the HUD, and PvP sabotage can flip the whole race.',
   },
   {
-    icon: icoPhantom(),
-    title: 'Connect Phantom',
+    icon: icoWallet(),
+    title: 'Connect MetaMask',
     body:
-      'Sign in with your Solana wallet in one tap. No passwords, no email — your key is your identity across the whole arena.',
+      'Sign in with your RobinhoodChain wallet in one tap. No passwords, no email — your key is your identity across the whole arena.',
   },
   {
     icon: icoPwa(),
@@ -58,9 +58,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: icoDevices(),
-    title: 'Mobile & desktop',
+    title: 'Elite gauntlets',
     body:
-      'One build, every screen. Twitch-precise keys on desktop, buttery on-screen controls on mobile — identical physics on both.',
+      'Every fifth chamber turns into a boss-style gauntlet with saw lanes, crushers, crossfire and lava pressure.',
   },
 ];
 
@@ -76,21 +76,21 @@ const ROADMAP: RoadPhase[] = [
     tag: 'Phase 01 · Live',
     title: 'Genesis Arena',
     body:
-      'The core loop: gravity-bending chambers, 42-ninja swarms, Phantom sign-in and real-time races against live ghosts.',
+      'The core loop: gravity-bending chambers, 42-ninja swarms, MetaMask sign-in, shock sabotage and real-time races against live ghosts.',
     done: true,
   },
   {
     tag: 'Phase 02',
-    title: 'On-chain leaderboards & NFT skins',
+    title: 'On-chain rewards & skin ownership',
     body:
-      'Immutable high scores on Solana and collectible ninja skins you truly own — mint, trade and deploy them into the arena.',
+      'Verified RobinhoodChain scores, seasonal rewards and collectible ninja skins once the production chain endpoints are configured.',
     done: false,
   },
   {
     tag: 'Phase 03',
-    title: 'Tournaments & $SHDK',
+    title: 'Tournaments & arena seasons',
     body:
-      'Scheduled bracket tournaments, staking, and the $SHDK token powering entry, rewards and community governance.',
+      'Scheduled bracket tournaments, league ladders and seasonal reward pools built around live multiplayer rooms.',
     done: false,
   },
   {
@@ -109,14 +109,14 @@ interface Faq {
 
 const FAQS: Faq[] = [
   {
-    q: 'What is Phantom?',
+    q: 'What is MetaMask?',
     a:
-      'Phantom is a free, non-custodial Solana wallet available as a browser extension and mobile app. In Shadoken it is simply your login and identity — you sign a message to prove the wallet is yours. It never triggers a transaction or charges gas just to play.',
+      'MetaMask is a non-custodial EVM wallet available as a browser extension and mobile app. In Shadoken it is your RobinhoodChain login and identity — you sign a message to prove the wallet is yours. It never triggers a transaction or charges gas just to play.',
   },
   {
     q: 'Do I need crypto to play?',
     a:
-      'No. Shadoken runs on Solana devnet, where everything is free. You never spend real SOL to enter the arena or race — you only need a Phantom wallet so the game knows who you are.',
+      'No. Wallet sign-in is only an identity check. You never spend gas to enter the arena or race — you only need MetaMask so the game knows who you are.',
   },
   {
     q: 'Is it really multiplayer?',
@@ -161,7 +161,7 @@ function markup(): string {
       </nav>
 
       <div class="lp-nav__actions">
-        <!-- main.ts mounts the Phantom connect button here. Do not fill it. -->
+        <!-- main.ts mounts the MetaMask connect button here. Do not fill it. -->
         <div id="nav-wallet"></div>
         <button class="lp-burger" data-burger aria-label="Toggle menu" aria-expanded="false">
           <span></span><span></span><span></span>
@@ -206,7 +206,7 @@ function backdrop(): string {
   <div class="lp-bg" aria-hidden="true">
     <div class="lp-bg__noise"></div>
     <div class="lp-bg__glow lp-bg__glow--red"></div>
-    <div class="lp-bg__glow lp-bg__glow--purple"></div>
+    <div class="lp-bg__glow lp-bg__glow--lime"></div>
     <div class="lp-bg__glow lp-bg__glow--center"></div>
     <div class="lp-bg__grid"></div>
     ${particles}
@@ -225,17 +225,17 @@ function hero(): string {
       <div class="lp-hero__copy reveal">
         <span class="lp-badge">
           <span class="lp-badge__dot"></span>
-          <span class="lp-badge__solana">◎</span>
-          Powered by Solana &middot; Phantom
+          <span class="lp-badge__chain">◇</span>
+          RobinhoodChain &middot; MetaMask
         </span>
         <h1 class="lp-hero__title">
           Command a <span class="lp-hl">swarm of <span class="num">42</span> ninjas</span>
           through gravity‑bending chambers.
         </h1>
         <p class="lp-hero__sub">
-          Shadoken is a Web3, real-time multiplayer arena. Flip the world 90&deg;,
-          pour your school through the blades, and race live ghosts across endless
-          seeded chambers. Free to play. Yours to install.
+          Shadoken is a RobinhoodChain real-time multiplayer arena. Flip the world
+          90&deg;, pour your school through the blades, charge shock sabotage, and
+          race live ghosts across endless seeded chambers.
         </p>
         <div class="lp-hero__cta">
           <button class="btn btn--primary btn--lg btn--glow" data-enter="mp">
@@ -243,6 +243,9 @@ function hero(): string {
           </button>
           <button class="btn btn--ghost btn--lg" data-enter="solo">
             Practice Solo
+          </button>
+          <button class="btn btn--ghost btn--lg" data-enter="daily">
+            Daily Seed
           </button>
           <button class="btn btn--ghost btn--lg btn--teal" data-enter="guest">
             Spectate as Guest (30s)
@@ -256,7 +259,7 @@ function hero(): string {
             <button class="lp-skin-opt" data-skin="1" style="--color: #ff8a70" title="Coral Red" aria-label="Coral Red"></button>
             <button class="lp-skin-opt" data-skin="2" style="--color: #9fe0ff" title="Neon Cyan" aria-label="Neon Cyan"></button>
             <button class="lp-skin-opt" data-skin="3" style="--color: #ffd27f" title="Gold" aria-label="Gold"></button>
-            <button class="lp-skin-opt" data-skin="4" style="--color: #c4a0ff" title="Solana Purple" aria-label="Solana Purple"></button>
+            <button class="lp-skin-opt" data-skin="4" style="--color: #CCFF00" title="Robinhood Lime" aria-label="Robinhood Lime"></button>
             <button class="lp-skin-opt" data-skin="5" style="--color: #8effb0" title="Aurora Green" aria-label="Aurora Green"></button>
             <button class="lp-skin-opt" data-skin="6" style="--color: #ff9fd0" title="Sakura Pink" aria-label="Sakura Pink"></button>
           </div>
@@ -274,7 +277,7 @@ function hero(): string {
         <div class="lp-hero__logo-wrap">
           <div class="lp-hero__orbit"></div>
           <div class="lp-hero__ring"></div>
-          <img class="lp-hero__logo" src="/logo.png" alt="" width="600" height="315" loading="eager" decoding="async" />
+          <img class="lp-hero__logo" src="/logo.png" alt="" width="768" height="768" loading="eager" decoding="async" />
         </div>
         <div class="lp-hero__swarm">${swarmSvg()}</div>
       </div>
@@ -287,8 +290,8 @@ function hero(): string {
 
 function marquee(): string {
   const items = [
-    'GRAVITY-BENDING', 'REAL-TIME ARENA', '42 NINJAS', 'PHANTOM SIGN-IN',
-    'INSTALLABLE PWA', 'SOLANA DEVNET', 'RACE LIVE GHOSTS', 'MOBILE + DESKTOP',
+    'GRAVITY-BENDING', 'REAL-TIME ARENA', '42 NINJAS', 'METAMASK SIGN-IN',
+    'SHOCK SABOTAGE', 'ROBINHOODCHAIN', 'RACE LIVE GHOSTS', 'MOBILE + DESKTOP',
   ];
   const row = items.map((t) => `<span>${t}</span><span class="lp-marquee__dot">&bull;</span>`).join('');
   return `
@@ -324,7 +327,7 @@ function howToPlay(): string {
   ).join('');
 
   const steps = [
-    ['Connect', 'Tap Connect and approve in Phantom. No password, no gas — just a signature.'],
+    ['Connect', 'Tap Connect and approve in MetaMask. No password, no gas — just a signature.'],
     ['Enter the Arena', 'Join a live room seeded to the same chambers as every other racer.'],
     ['Survive', 'Bend gravity, dodge the blades, and outlast the swarm to climb the board.'],
   ].map(
@@ -447,10 +450,11 @@ function cta(): string {
   <section class="lp-cta reveal">
     <div class="lp-cta__inner">
       <h2>Your school is waiting.</h2>
-      <p>Connect your wallet and pour 42 ninjas into the arena. Free on devnet — no gas, no catch.</p>
+      <p>Connect MetaMask and pour 42 ninjas into the RobinhoodChain arena. Wallet sign-in is gas-free.</p>
       <div class="lp-cta__btns">
         <button class="btn btn--primary btn--lg btn--glow" data-enter="mp">${icoPlay()} Enter the Arena</button>
         <button class="btn btn--ghost btn--lg" data-enter="solo">Practice Solo</button>
+        <button class="btn btn--ghost btn--lg" data-enter="daily">Daily Seed</button>
         <button class="btn btn--ghost btn--lg btn--teal" data-enter="guest">Spectate as Guest (30s)</button>
       </div>
     </div>
@@ -524,7 +528,8 @@ function wire(root: HTMLElement): void {
       const type = btn.dataset.enter;
       const mp = type === 'mp' || type === 'guest';
       const guest = type === 'guest';
-      bus.emit('game:enter', { multiplayer: mp, guest, skin: selectedSkin });
+      const daily = type === 'daily';
+      bus.emit('game:enter', { multiplayer: mp, guest, daily, skin: selectedSkin });
     });
   });
 
@@ -728,7 +733,7 @@ function icoArena(): string {
   );
 }
 
-function icoPhantom(): string {
+function icoWallet(): string {
   return svg(
     '<path d="M4 13a8 8 0 0 1 16 0v6a1 1 0 0 1-1.6.8L16 18l-2 2-2-2-2 2-2.4-1.2A1 1 0 0 1 4 18z" fill="currentColor"/><circle cx="9.5" cy="11.5" r="1.3" fill="var(--panel)"/><circle cx="14.5" cy="11.5" r="1.3" fill="var(--panel)"/>',
   );

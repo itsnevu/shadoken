@@ -14,13 +14,14 @@ export default defineConfig({
   build: {
     target: 'es2020',
     sourcemap: true,
+    cssMinify: 'esbuild',
     chunkSizeWarningLimit: 1400,
     rollupOptions: {
       output: {
-        manualChunks: {
-          phaser: ['phaser'],
-          solana: ['@solana/web3.js'],
-          colyseus: ['colyseus.js'],
+        manualChunks(id) {
+          if (id.includes('node_modules') && id.includes('phaser')) return 'phaser';
+          if (id.includes('node_modules') && id.includes('colyseus')) return 'colyseus';
+          return undefined;
         },
       },
     },
@@ -30,7 +31,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: [
         'logo.png',
-        'favicon.svg',
+        'favicon.png',
         'audio/*.ogg',
       ],
       manifest: false, // we ship our own public/manifest.webmanifest

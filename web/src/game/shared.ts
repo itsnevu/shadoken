@@ -13,6 +13,8 @@ export interface VirtualInput {
   jump: boolean;
   /** Edge-triggered: Hud sets true, PlayScene consumes and clears. */
   rotate: boolean;
+  /** Edge-triggered multiplayer sabotage burst. */
+  sabotage: boolean;
 }
 
 export interface NetBridge {
@@ -28,6 +30,14 @@ export interface HudData {
   chambers: number;
   best: number;
   players: number;
+  sabotageCharge: number;
+  sabotageMax: number;
+  sabotageName: string;
+  shield: number;
+  raceRank: number;
+  raceTarget: number;
+  raceFinished: boolean;
+  sabotaged: boolean;
   over: boolean;
 }
 

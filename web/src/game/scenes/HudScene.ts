@@ -25,7 +25,7 @@ export class HudScene extends Phaser.Scene {
     // Ensure the shared input object exists (PlayScene usually creates it first).
     let input = this.registry.get(REG.input) as VirtualInput | undefined;
     if (!input) {
-      input = { left: false, right: false, jump: false, rotate: false };
+      input = { left: false, right: false, jump: false, rotate: false, sabotage: false };
       this.registry.set(REG.input, input);
     }
     this.input$ = input;
@@ -93,10 +93,11 @@ export class HudScene extends Phaser.Scene {
 
     const left = holdBtn('‹', () => (this.input$.left = true), () => (this.input$.left = false));
     const right = holdBtn('›', () => (this.input$.right = true), () => (this.input$.right = false));
-    const jump = tapBtn('▲', 0xe23b2e, () => (this.input$.jump = true));
-    const rotate = tapBtn('⟳', 0xab9ff2, () => (this.input$.rotate = true));
+    const jump = tapBtn('▲', 0xccff00, () => (this.input$.jump = true));
+    const rotate = tapBtn('⟳', 0xf5c542, () => (this.input$.rotate = true));
+    const sabotage = tapBtn('⚡', 0xccff00, () => (this.input$.sabotage = true));
 
-    this.controls = [left, right, jump, rotate];
+    this.controls = [left, right, jump, rotate, sabotage];
     this.controls.forEach((c) => c.setDepth(30).setScrollFactor(0).setAlpha(0.9));
     this.layoutControls();
   }
@@ -117,15 +118,16 @@ export class HudScene extends Phaser.Scene {
   }
 
   private layoutControls = (): void => {
-    if (this.controls.length < 4) return;
+    if (this.controls.length < 5) return;
     const w = this.scale.width;
     const h = this.scale.height;
     const pad = 74;
-    const [left, right, jump, rotate] = this.controls;
+    const [left, right, jump, rotate, sabotage] = this.controls;
     left!.setPosition(pad, h - pad);
     right!.setPosition(pad + 108, h - pad + 6);
     jump!.setPosition(w - pad, h - pad);
     rotate!.setPosition(w - pad - 104, h - pad + 6);
+    sabotage!.setPosition(w - pad - 208, h - pad + 12);
   };
 
   update(): void {
@@ -133,7 +135,14 @@ export class HudScene extends Phaser.Scene {
     if (!hud) return;
     this.scoreText.setText(String(hud.score));
     const players = hud.players > 1 ? `  ·  ${hud.players} in arena` : '';
-    this.countText.setText(`🥷 ${hud.alive}/${hud.total}   ·   ${hud.chambers} chambers   ·   best ${hud.best}${players}`);
+    const sabotage =
+      hud.sabotageCharge >= hud.sabotageMax
+        ? `  ·  ${hud.sabotageName} ready`
+        : `  ·  ${hud.sabotageName} ${hud.sabotageCharge}/${hud.sabotageMax}`;
+    const shield = hud.shield > 0 ? `  ·  shield ${hud.shield}` : '';
+    const race = hud.raceFinished ? '  ·  finish' : `  ·  #${hud.raceRank} to ${hud.raceTarget}`;
+    const slowed = hud.sabotaged ? '  ·  jammed' : '';
+    this.countText.setText(`${hud.alive}/${hud.total} ninjas   ·   ${hud.chambers} chambers   ·   best ${hud.best}${players}${race}${sabotage}${shield}${slowed}`);
 
     const dim = hud.over ? 0.25 : 0.9;
     this.controls.forEach((c) => c.setAlpha(dim));

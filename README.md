@@ -4,13 +4,16 @@ Numerous Ninjas
 ![Numerous Ninjas Logo](./Assets/Publication/logo.png)
 
 > ### 🌐 Now playable on the web — **Shadoken**
-> A Web3, multiplayer, PWA, mobile-responsive browser rewrite lives in [`web/`](./web)
-> (game client) and [`server/`](./server) (Colyseus multiplayer). Connect your
-> **Phantom** wallet and race other players through the endless chambers in real
-> time. **See [`web/README.md`](./web/README.md) for how to run it.**
+> A RobinhoodChain, multiplayer, PWA, mobile-responsive browser rewrite lives in
+> [`web/`](./web) (game client) and [`server/`](./server) (Colyseus multiplayer).
+> Connect **MetaMask** and race other players through the endless chambers in
+> real time. **See [`web/README.md`](./web/README.md) for how to run it.**
 >
 > Quick start: `cd server && npm install && npm run dev` — then in another shell
 > `cd web && npm install && npm run dev` → open http://localhost:5173
+>
+> Pool-funded contracts live in [`contracts/`](./contracts): `cd contracts &&
+> npm install && npm run build`.
 >
 > _Below is the original Unity project documentation._
 

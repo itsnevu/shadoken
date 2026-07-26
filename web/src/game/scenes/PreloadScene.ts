@@ -2,26 +2,26 @@ import Phaser from 'phaser';
 
 // Palette (matches style.css design tokens).
 const C = {
-  black: 0x12151a,
-  panel: 0x262c34,
-  panel2: 0x2e353e,
-  line: 0x363d47,
-  line2: 0x3d4650,
-  shadow: 0x15181d,
-  accent: 0xe23b2e,
-  accentBright: 0xff5a3c,
-  accentDeep: 0xb62519,
-  phantom: 0xab9ff2,
+  black: 0x1c180d,
+  panel: 0x242012,
+  panel2: 0x302a16,
+  line: 0x514827,
+  line2: 0x665a32,
+  shadow: 0x100d07,
+  accent: 0xccff00,
+  accentBright: 0xe1ff5c,
+  accentDeep: 0x8fb300,
+  phantom: 0xccff00,
   gold: 0xf5c542,
   goldSoft: 0xffe9a8,
   goldDeep: 0xcaa02a,
-  success: 0x37c46b,
-  successSoft: 0x7fe0a1,
+  success: 0xccff00,
+  successSoft: 0xe1ff5c,
   water: 0x2fb6d8,
   waterSoft: 0x8fe0f2,
   steel: 0x9aa4af,
   steelDark: 0x5b636d,
-  ink: 0xeef1f4,
+  ink: 0xfcfff0,
 };
 
 /**
@@ -66,7 +66,7 @@ export class PreloadScene extends Phaser.Scene {
     this.tex('ninja', 20, 24, (g) => {
       g.fillStyle(C.black, 1);
       g.fillRoundedRect(4, 6, 12, 16, 4); // torso
-      g.fillStyle(0x1b2026, 1);
+      g.fillStyle(0x242012, 1);
       g.fillCircle(10, 7, 5); // hood/head
       g.fillStyle(C.black, 1);
       g.fillRect(5, 5, 10, 3); // hood brim
@@ -76,7 +76,7 @@ export class PreloadScene extends Phaser.Scene {
       g.fillStyle(C.accentBright, 1);
       g.fillRect(7, 6, 2, 2); // eyes
       g.fillRect(11, 6, 2, 2);
-      g.fillStyle(0x0e1013, 1);
+      g.fillStyle(0x100d07, 1);
       g.fillRect(5, 16, 10, 2); // belt
     });
 
@@ -139,7 +139,7 @@ export class PreloadScene extends Phaser.Scene {
       g.fillRoundedRect(0, 4, 64, 16, 6);
       g.fillStyle(C.successSoft, 1);
       g.fillRect(2, 5, 60, 4);
-      g.fillStyle(0x0e2a18, 1);
+      g.fillStyle(0x2e3b00, 1);
       g.fillTriangle(24, 16, 32, 8, 40, 16);
     });
 
@@ -227,16 +227,16 @@ export class PreloadScene extends Phaser.Scene {
       g.fillRect(4, 9, 14, 4);
     });
     this.pickupBg('pu_mystery', (g) => {
-      g.lineStyle(2, 0x14f195, 1);
+      g.lineStyle(2, 0xccff00, 1);
       g.strokeRect(6, 6, 10, 10);
-      g.fillStyle(0x9945ff, 1);
+      g.fillStyle(0xf5c542, 1);
       g.fillCircle(11, 11, 2);
     });
   }
 
   private pickupBg(key: string, glyph: (g: Phaser.GameObjects.Graphics) => void): void {
     this.tex(key, 22, 22, (g) => {
-      g.fillStyle(0x1b1f24, 1);
+      g.fillStyle(0x242012, 1);
       g.fillRoundedRect(1, 1, 20, 20, 6);
       g.lineStyle(1.5, C.line, 1);
       g.strokeRoundedRect(1, 1, 20, 20, 6);

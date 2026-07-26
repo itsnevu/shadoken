@@ -1,7 +1,6 @@
 /* ==========================================================================
    Shadoken — global design tokens & shell layout.
-   Visual identity: Solana-inspired dark with purple-teal gradients,
-   glassmorphism, neomorphism cards, floating particles, and neon glows.
+   Visual identity: RobinhoodChain neon lime over warm near-black.
    ========================================================================== */
 
 @font-face {
@@ -12,32 +11,34 @@
 }
 
 :root {
-  /* Core palette — Solana vibes */
-  --bg: #0a0816;
-  --bg-1: #0f0c22;
-  --bg-2: #161230;
-  --panel: #1a1542;
-  --panel-2: #221a55;
-  --line: #2a2360;
+  /* Core palette — RobinhoodChain */
+  --warm-black: #1C180D;
+  --lime: #CCFF00;
+  --bg: #1C180D;
+  --bg-1: #242012;
+  --bg-2: #312b16;
+  --panel: #242012;
+  --panel-2: #302a16;
+  --line: #514827;
 
-  --ink: #f0f0ff;
-  --ink-dim: #b8b4d8;
-  --muted: #7e78aa;
+  --ink: #fcfff0;
+  --ink-dim: #d9deb8;
+  --muted: #9a9576;
 
-  --accent: #9945FF;           /* Solana purple */
-  --accent-bright: #b96cff;
-  --accent-deep: #7b2fe0;
-  --accent-glow: rgba(153, 69, 255, 0.45);
+  --accent: #CCFF00;
+  --accent-bright: #e1ff5c;
+  --accent-deep: #8fb300;
+  --accent-glow: rgba(204, 255, 0, 0.45);
 
-  --teal: #14F195;             /* Solana teal/green */
-  --teal-dim: #0fd17f;
-  --teal-glow: rgba(20, 241, 149, 0.3);
+  --teal: #58f0c7;
+  --teal-dim: #2fcfa5;
+  --teal-glow: rgba(88, 240, 199, 0.22);
 
-  --phantom: #ab9ff2;          /* Phantom brand purple */
-  --phantom-deep: #6d5bd0;
+  --phantom: #CCFF00;
+  --phantom-deep: #8fb300;
 
   --gold: #f5c542;
-  --success: #14F195;
+  --success: #CCFF00;
   --danger: #ff4d6a;
   --water: #2fb6d8;
 
@@ -52,12 +53,12 @@
   --r-xl: 28px;
   --shadow-1: 0 6px 24px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 18px 60px rgba(0, 0, 0, 0.55);
-  --shadow-glow: 0 0 40px rgba(153, 69, 255, 0.18);
+  --shadow-glow: 0 0 40px rgba(204, 255, 0, 0.18);
   --glow: 0 0 32px var(--accent-glow);
 
   /* Glass */
-  --glass-bg: rgba(20, 16, 50, 0.55);
-  --glass-border: rgba(153, 69, 255, 0.15);
+  --glass-bg: rgba(36, 32, 18, 0.62);
+  --glass-border: rgba(204, 255, 0, 0.18);
   --glass-blur: blur(16px);
 
   /* Layout */
@@ -80,9 +81,9 @@ body {
 
 body {
   background:
-    radial-gradient(ellipse 140% 80% at 70% -10%, rgba(153, 69, 255, 0.18), transparent 55%),
-    radial-gradient(ellipse 100% 60% at -10% 120%, rgba(20, 241, 149, 0.08), transparent 50%),
-    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(123, 47, 224, 0.06), transparent 60%),
+    radial-gradient(ellipse 140% 80% at 70% -10%, rgba(204, 255, 0, 0.15), transparent 55%),
+    radial-gradient(ellipse 100% 60% at -10% 120%, rgba(88, 240, 199, 0.08), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(245, 197, 66, 0.05), transparent 60%),
     var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
@@ -111,7 +112,7 @@ h2,
 h3 {
   font-family: var(--font-display);
   line-height: 1.05;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -199,19 +200,19 @@ img {
   transform: none;
 }
 
-/* Primary — gradient purple with neon glow */
+/* Primary — RobinhoodChain lime with neon glow */
 .btn--primary {
-  --btn-bg: linear-gradient(135deg, #a855f7, #7c3aed, #6d28d9);
-  --btn-ink: #fff;
-  border-color: rgba(168, 85, 247, 0.5);
+  --btn-bg: linear-gradient(135deg, #e1ff5c, #ccff00, #8fb300);
+  --btn-ink: #1C180D;
+  border-color: rgba(204, 255, 0, 0.55);
   box-shadow:
-    0 0 20px rgba(153, 69, 255, 0.3),
-    0 8px 24px rgba(109, 40, 217, 0.3);
+    0 0 20px rgba(204, 255, 0, 0.28),
+    0 8px 24px rgba(143, 179, 0, 0.28);
 }
 .btn--primary:hover {
   box-shadow:
-    0 0 40px rgba(153, 69, 255, 0.5),
-    0 12px 36px rgba(109, 40, 217, 0.4);
+    0 0 40px rgba(204, 255, 0, 0.42),
+    0 12px 36px rgba(143, 179, 0, 0.36);
 }
 
 /* Glow variant — animated pulsing glow */
@@ -219,25 +220,25 @@ img {
   animation: btn-glow-pulse 3s ease-in-out infinite;
 }
 @keyframes btn-glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(153, 69, 255, 0.3), 0 8px 24px rgba(109, 40, 217, 0.3); }
-  50% { box-shadow: 0 0 50px rgba(153, 69, 255, 0.5), 0 12px 40px rgba(109, 40, 217, 0.45), 0 0 80px rgba(153, 69, 255, 0.15); }
+  0%, 100% { box-shadow: 0 0 20px rgba(204, 255, 0, 0.28), 0 8px 24px rgba(143, 179, 0, 0.28); }
+  50% { box-shadow: 0 0 50px rgba(204, 255, 0, 0.46), 0 12px 40px rgba(143, 179, 0, 0.38), 0 0 80px rgba(204, 255, 0, 0.14); }
 }
 
 /* Teal accent button */
 .btn--teal {
-  border-color: rgba(20, 241, 149, 0.35);
+  border-color: rgba(88, 240, 199, 0.35);
   color: var(--teal);
 }
 .btn--teal:hover {
-  border-color: rgba(20, 241, 149, 0.6);
-  box-shadow: 0 0 24px rgba(20, 241, 149, 0.15);
+  border-color: rgba(88, 240, 199, 0.6);
+  box-shadow: 0 0 24px rgba(88, 240, 199, 0.15);
 }
 
 .btn--phantom {
-  --btn-bg: linear-gradient(180deg, #b6acf6, var(--phantom));
-  --btn-ink: #1b1330;
+  --btn-bg: linear-gradient(180deg, #e1ff5c, var(--phantom));
+  --btn-ink: #1C180D;
   border-color: var(--phantom-deep);
-  box-shadow: 0 8px 24px rgba(107, 91, 208, 0.35);
+  box-shadow: 0 8px 24px rgba(143, 179, 0, 0.35);
 }
 .btn--ghost {
   --btn-bg: transparent;
@@ -245,7 +246,7 @@ img {
 }
 .btn--ghost:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 24px rgba(153, 69, 255, 0.15);
+  box-shadow: 0 0 24px rgba(204, 255, 0, 0.15);
 }
 .btn--lg {
   font-size: 17px;
@@ -285,7 +286,7 @@ img {
   animation: toast-in 0.25s ease;
 }
 .toast--success {
-  border-color: rgba(20, 241, 149, 0.4);
+  border-color: rgba(204, 255, 0, 0.4);
 }
 .toast--error {
   border-color: rgba(255, 77, 106, 0.4);

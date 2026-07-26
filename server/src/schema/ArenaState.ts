@@ -30,6 +30,7 @@ export class Player extends Schema {
   /** Ninja logic state — 'idle' | 'run' | 'jump' | 'fall' | 'swim' | 'dead'. */
   @type('string') state = 'idle';
   @type('number') score = 0;
+  @type('number') chambers = 0;
   @type('boolean') alive = true;
   /** Cosmetic skin index. */
   @type('number') skin = 0;

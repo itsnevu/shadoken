@@ -20,7 +20,7 @@ import { HudScene } from './scenes/HudScene';
 // Re-exported here for backwards-compatible `import { CONST } from '../config'`.
 export { CONST, CEIL_BOT } from './constants';
 
-const BG_HEX = 0x16191d;
+const BG_HEX = 0x1c180d;
 
 /**
  * Build the Phaser game config. Scenes are registered here; the first one

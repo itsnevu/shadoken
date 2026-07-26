@@ -1,7 +1,7 @@
 // Tiny typed event bus — zero dependencies. Used as the decoupled message
 // channel between the shell, wallet, game and net subsystems.
 
-import type { AppScreen, WalletSession, RunResult, PlayerSnapshot } from './types';
+import type { AppScreen, WalletSession, RunResult, RunTicket, PlayerSnapshot } from './types';
 
 export interface AppEventMap {
   'wallet:connecting': void;
@@ -10,11 +10,13 @@ export interface AppEventMap {
   'wallet:error': { message: string };
   'wallet:connect-request': void;
   'screen:change': AppScreen;
-  'game:enter': { multiplayer: boolean; guest?: boolean; skin?: number };
+  'game:enter': { multiplayer: boolean; guest?: boolean; skin?: number; daily?: boolean };
   'game:ready': void;
   'game:exit': void;
   'game:over': RunResult;
   'game:guest-time': number;
+  'pool:open-console': void;
+  'run:ticket': RunTicket;
   'net:status': 'connecting' | 'connected' | 'disconnected' | 'error';
   'net:players': PlayerSnapshot[];
   'audio:muted': boolean;

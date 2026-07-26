@@ -4,21 +4,23 @@
 // (landing / wallet / game / net). Change with care.
 // ============================================================================
 
-import type { SolanaNetwork } from './config';
+import type { WalletNetwork } from './config';
 
 /** Authenticated wallet session, persisted to localStorage. */
 export interface WalletSession {
-  /** base58-encoded Solana public key. */
+  /** Wallet address used as arena identity. */
   address: string;
   /** Human-friendly truncated form, e.g. "Ab12…Yz90". */
   shortAddress: string;
-  network: SolanaNetwork;
+  network: WalletNetwork;
+  walletKind: 'metamask';
+  chainId?: string;
   /** Unix ms when the session was established. */
   connectedAt: number;
-  /** base58 signature of the auth statement (sign-in-with-Solana). */
+  /** Signed auth statement proving wallet ownership. */
   signature?: string;
-  /** Optional cached SOL balance (lamports) for HUD display. */
-  lamports?: number;
+  /** Optional cached native balance in the smallest unit. */
+  balanceWei?: string;
 }
 
 /** Top-level screen the shell is showing. */
@@ -51,6 +53,7 @@ export interface PlayerSnapshot {
   facing: 1 | -1;
   state: NinjaState;
   score: number;
+  chambers: number;
   alive: boolean;
   skin: number;
 }
@@ -65,8 +68,23 @@ export interface PlayerInputMessage {
   facing: 1 | -1;
   state: NinjaState;
   score: number;
+  chambers: number;
   alive: boolean;
   sabotage?: string;
+}
+
+/**
+ * Server-issued proof that a run happened. Only the numbers the arena room
+ * observed are in here — the claim endpoint signs these, never client input.
+ */
+export interface RunTicket {
+  runId: string;
+  wallet: string;
+  score: number;
+  chambers: number;
+  survivedMs: number;
+  seed: number;
+  expiresInMs: number;
 }
 
 /** Result emitted when a run ends. */
@@ -75,6 +93,7 @@ export interface RunResult {
   chambers: number;
   distance: number;
   survivedMs: number;
+  seed: number;
 }
 
 /** Options passed when launching the Phaser game. */
@@ -104,20 +123,19 @@ export interface NetHandle {
   readonly seed: number;
   join(session: WalletSession | null, skin?: number): Promise<void>;
   leave(): void;
+  /** Tell the server the run finished so it files a claimable run ticket. */
+  endRun(): void;
   sendInput(msg: PlayerInputMessage): void;
   onPlayers(cb: (players: PlayerSnapshot[]) => void): void;
   onSeed(cb: (seed: number) => void): void;
   onStatus(cb: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void): void;
 }
 
-/** Minimal Phantom provider surface we rely on (injected by the wallet). */
-export interface PhantomProvider {
-  isPhantom?: boolean;
-  publicKey: { toString(): string } | null;
-  isConnected: boolean;
-  connect(opts?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: { toString(): string } }>;
-  disconnect(): Promise<void>;
-  signMessage(message: Uint8Array, display?: 'utf8' | 'hex'): Promise<{ signature: Uint8Array }>;
-  on(event: string, handler: (args: unknown) => void): void;
-  removeListener(event: string, handler: (args: unknown) => void): void;
+/** Minimal EIP-1193 provider surface used for MetaMask / RobinhoodChain. */
+export interface EthereumProvider {
+  isMetaMask?: boolean;
+  selectedAddress?: string | null;
+  request<T = unknown>(args: { method: string; params?: unknown[] | Record<string, unknown> }): Promise<T>;
+  on?(event: string, handler: (args: unknown) => void): void;
+  removeListener?(event: string, handler: (args: unknown) => void): void;
 }
