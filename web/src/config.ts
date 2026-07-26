@@ -27,11 +27,13 @@ export const CONTRACTS = {
 } as const;
 
 export const MULTIPLAYER = {
-  // Colyseus endpoint. Defaults to localhost dev server.
+  // Colyseus endpoint. Dev default is the local server; on https the default
+  // is same-origin (the reverse proxy forwards /matchmake, /api and WebSocket
+  // upgrades to the arena server), so one build works on any deployed host.
   url:
     (import.meta.env.VITE_MULTIPLAYER_URL as string) ||
     (location.protocol === 'https:'
-      ? `wss://${location.hostname}:2567`
+      ? `wss://${location.host}`
       : 'ws://localhost:2567'),
   roomName: 'arena',
   // If the server is unreachable, the game still runs in solo/offline mode.

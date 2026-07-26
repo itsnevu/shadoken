@@ -48,3 +48,6 @@ npm-debug.log*
 yarn-error.log*
 .vite/
 *.tsbuildinfo
+
+# Runtime data written by the arena server — never committed.
+server/highscores.json
