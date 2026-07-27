@@ -64,6 +64,37 @@ const FEATURES: Feature[] = [
   },
 ];
 
+const MODES = [
+  {
+    id: 'mp',
+    label: 'Arena',
+    title: 'Ranked Relay',
+    body: 'Live ghosts, shared chambers, sabotage windows, and a chamber-10 sprint target.',
+    meta: 'MetaMask',
+  },
+  {
+    id: 'solo',
+    label: 'Practice',
+    title: 'Solo Lab',
+    body: 'Offline-ready runs for route practice, gravity timing, and swarm survival.',
+    meta: 'No server',
+  },
+  {
+    id: 'daily',
+    label: 'Daily',
+    title: 'Daily Seed',
+    body: 'Everyone gets the same UTC seed for route comparison and clean reruns.',
+    meta: 'UTC reset',
+  },
+  {
+    id: 'guest',
+    label: 'Spectate',
+    title: 'Guest Sprint',
+    body: 'Drop in quickly without wallet sign-in and feel the arena tempo.',
+    meta: '30 sec',
+  },
+] as const;
+
 interface RoadPhase {
   tag: string;
   title: string;
@@ -155,6 +186,7 @@ function markup(): string {
 
       <nav class="lp-nav__links" data-menu aria-label="Primary">
         <a href="#lp-hero" data-scroll data-nav-link>Play</a>
+        <a href="#lp-modes" data-scroll data-nav-link>Modes</a>
         <a href="#lp-features" data-scroll data-nav-link>Features</a>
         <a href="#lp-how" data-scroll data-nav-link>How to Play</a>
         <a href="#lp-roadmap" data-scroll data-nav-link>Roadmap</a>
@@ -173,6 +205,7 @@ function markup(): string {
   <main class="lp">
     ${hero()}
     ${marquee()}
+    ${modeStrip()}
     ${leaderboardSection()}
     ${features()}
     ${howToPlay()}
@@ -191,25 +224,10 @@ function markup(): string {
 }
 
 function backdrop(): string {
-  // Generate 12 floating particles
-  const particles = Array.from({ length: 12 }, (_, i) => {
-    const size = 3 + Math.random() * 5;
-    const left = Math.random() * 100;
-    const top = Math.random() * 200;
-    const delay = (Math.random() * 8).toFixed(1);
-    const dur = (12 + Math.random() * 10).toFixed(1);
-    const hue = Math.random() > 0.5 ? 'var(--accent)' : 'var(--teal)';
-    return `<span class="lp-particle" style="--sz:${size}px;left:${left}%;top:${top}vh;animation-delay:-${delay}s;animation-duration:${dur}s;--clr:${hue}" data-i="${i}"></span>`;
-  }).join('');
-
   return `
   <div class="lp-bg" aria-hidden="true">
     <div class="lp-bg__noise"></div>
-    <div class="lp-bg__glow lp-bg__glow--red"></div>
-    <div class="lp-bg__glow lp-bg__glow--lime"></div>
-    <div class="lp-bg__glow lp-bg__glow--center"></div>
     <div class="lp-bg__grid"></div>
-    ${particles}
     <div class="lp-blade lp-blade--a" data-parallax="0.10">${bladeSvg()}</div>
     <div class="lp-blade lp-blade--b" data-parallax="0.18">${bladeSvg()}</div>
     <div class="lp-blade lp-blade--c" data-parallax="0.06">${bladeSvg()}</div>
@@ -221,21 +239,22 @@ function backdrop(): string {
 function hero(): string {
   return `
   <section class="lp-hero" id="lp-hero">
+    <div class="lp-hero__media" aria-hidden="true">
+      <img src="/gameplay_0.png" alt="" width="1280" height="720" loading="eager" decoding="async" />
+    </div>
     <div class="lp-hero__inner">
       <div class="lp-hero__copy reveal">
         <span class="lp-badge">
           <span class="lp-badge__dot"></span>
-          <span class="lp-badge__chain">◇</span>
-          RobinhoodChain &middot; MetaMask
+          Season 01 &middot; RobinhoodChain relay
         </span>
         <h1 class="lp-hero__title">
-          Command a <span class="lp-hl">swarm of <span class="num">42</span> ninjas</span>
-          through gravity‑bending chambers.
+          Shadoken
         </h1>
+        <p class="lp-hero__kicker">Gravity racing for a 42-ninja swarm.</p>
         <p class="lp-hero__sub">
-          Shadoken is a RobinhoodChain real-time multiplayer arena. Flip the world
-          90&deg;, pour your school through the blades, charge shock sabotage, and
-          race live ghosts across endless seeded chambers.
+          Flip the world 90&deg;, pour your school through blade chambers, charge
+          shock sabotage, and race live ghosts across the same seeded route.
         </p>
         <div class="lp-hero__cta">
           <button class="btn btn--primary btn--lg btn--glow" data-enter="mp">
@@ -248,12 +267,19 @@ function hero(): string {
             Daily Seed
           </button>
           <button class="btn btn--ghost btn--lg btn--teal" data-enter="guest">
-            Spectate as Guest (30s)
+            Guest Sprint
           </button>
         </div>
 
+        <div class="lp-hero__route" aria-label="Arena run format">
+          <span><strong>01</strong> deploy</span>
+          <span><strong>05</strong> gauntlet</span>
+          <span><strong>10</strong> sprint finish</span>
+          <span><strong>PvP</strong> sabotage</span>
+        </div>
+
         <div class="lp-hero__skin-selector">
-          <span class="lp-skin-label">Select Swarm Color:</span>
+          <span class="lp-skin-label">Swarm color</span>
           <div class="lp-skin-options">
             <button class="lp-skin-opt is-active" data-skin="0" style="--color: #ffffff" title="Obsidian White" aria-label="Obsidian White"></button>
             <button class="lp-skin-opt" data-skin="1" style="--color: #ff8a70" title="Coral Red" aria-label="Coral Red"></button>
@@ -274,10 +300,17 @@ function hero(): string {
       </div>
 
       <div class="lp-hero__art reveal" aria-hidden="true">
-        <div class="lp-hero__logo-wrap">
-          <div class="lp-hero__orbit"></div>
-          <div class="lp-hero__ring"></div>
-          <img class="lp-hero__logo" src="/logo.png" alt="" width="768" height="768" loading="eager" decoding="async" />
+        <div class="lp-stage">
+          <img class="lp-stage__shot" src="/gameplay_1.png" alt="" width="1280" height="720" loading="eager" decoding="async" />
+          <img class="lp-stage__logo" src="/logo.png" alt="" width="180" height="180" loading="eager" decoding="async" />
+          <div class="lp-stage__hud lp-stage__hud--top">
+            <span>LIVE ROOM</span>
+            <strong>CHAMBER 07</strong>
+          </div>
+          <div class="lp-stage__hud lp-stage__hud--bottom">
+            <span>SHOCK READY</span>
+            <strong>42 ACTIVE</strong>
+          </div>
         </div>
         <div class="lp-hero__swarm">${swarmSvg()}</div>
       </div>
@@ -300,6 +333,23 @@ function marquee(): string {
   </div>`;
 }
 
+function modeStrip(): string {
+  const modes = MODES.map(
+    (m) => `
+    <button class="lp-mode reveal" data-enter="${m.id}" type="button">
+      <span class="lp-mode__label">${m.label}</span>
+      <strong>${m.title}</strong>
+      <span>${m.body}</span>
+      <em>${m.meta}</em>
+    </button>`,
+  ).join('');
+  return `
+  <section class="lp-section lp-section--tight" id="lp-modes">
+    ${sectionHead('Run Modes', 'Pick the route before the blades move', 'Four entry points for live races, practice, daily comparison, and guest play.')}
+    <div class="lp-mode-grid">${modes}</div>
+  </section>`;
+}
+
 function features(): string {
   const cards = FEATURES.map(
     (f, i) => `
@@ -311,7 +361,7 @@ function features(): string {
   ).join('');
   return `
   <section class="lp-section" id="lp-features">
-    ${sectionHead('Features', 'Everything the arena throws at you', 'Six pillars that make every run feel alive — and dangerous.')}
+    ${sectionHead('Features', 'Everything the arena throws at you', 'Six pillars that make every run feel alive and dangerous.')}
     <div class="lp-feat-grid">${cards}</div>
   </section>`;
 }
@@ -430,7 +480,7 @@ function faq(): string {
 
 function leaderboardSection(): string {
   return `
-  <section class="lp-section" id="lp-all-time-leaderboard" style="max-width: 640px; margin: 0 auto;">
+  <section class="lp-section lp-section--compact" id="lp-all-time-leaderboard">
     <header class="lp-head reveal">
       <span class="lp-eyebrow">Competition</span>
       <h2 class="lp-head__title">All-Time High Scores</h2>
@@ -455,7 +505,7 @@ function cta(): string {
         <button class="btn btn--primary btn--lg btn--glow" data-enter="mp">${icoPlay()} Enter the Arena</button>
         <button class="btn btn--ghost btn--lg" data-enter="solo">Practice Solo</button>
         <button class="btn btn--ghost btn--lg" data-enter="daily">Daily Seed</button>
-        <button class="btn btn--ghost btn--lg btn--teal" data-enter="guest">Spectate as Guest (30s)</button>
+        <button class="btn btn--ghost btn--lg btn--teal" data-enter="guest">Guest Sprint</button>
       </div>
     </div>
   </section>`;
@@ -574,7 +624,7 @@ function wire(root: HTMLElement): void {
   const navLinks = Array.from(
     root.querySelectorAll<HTMLAnchorElement>('[data-nav-link]'),
   );
-  const sectionIds = ['lp-hero', 'lp-features', 'lp-how', 'lp-roadmap'];
+  const sectionIds = ['lp-hero', 'lp-modes', 'lp-features', 'lp-how', 'lp-roadmap'];
   const spy = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -685,20 +735,9 @@ function wire(root: HTMLElement): void {
           allTimeListEl.innerHTML = '<div class="lp-leaderboard-empty">No highscores yet. Be the first!</div>';
           return;
         }
-        allTimeListEl.innerHTML = scores.map((s, idx) => {
-          const rank = idx + 1;
-          const dispName = s.wallet ? shortenAddress(s.wallet) : s.name;
-          const rowTitle = s.wallet ? `Wallet: ${s.wallet}` : `Guest: ${s.name}`;
-          return `
-            <div class="lp-leaderboard-row" title="${rowTitle}">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <span class="lp-leaderboard-rank">${rank}.</span>
-                <span class="lp-leaderboard-name">${dispName}</span>
-              </div>
-              <span class="lp-leaderboard-score">${s.score} pts</span>
-            </div>
-          `;
-        }).join('');
+        allTimeListEl.replaceChildren(
+          ...scores.map((s, idx) => leaderboardRow(s, idx + 1)),
+        );
       })
       .catch((e) => {
         console.warn('[landing] failed to load leaderboard', e);
@@ -706,6 +745,34 @@ function wire(root: HTMLElement): void {
       });
   };
   fetchHighscores();
+}
+
+function leaderboardRow(
+  score: { name: string; wallet: string; score: number },
+  rank: number,
+): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'lp-leaderboard-row';
+  row.title = score.wallet ? `Wallet: ${score.wallet}` : `Guest: ${score.name}`;
+
+  const identity = document.createElement('div');
+  identity.className = 'lp-leaderboard-identity';
+
+  const rankEl = document.createElement('span');
+  rankEl.className = 'lp-leaderboard-rank';
+  rankEl.textContent = `${rank}.`;
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'lp-leaderboard-name';
+  nameEl.textContent = score.wallet ? shortenAddress(score.wallet) : score.name;
+
+  const scoreEl = document.createElement('span');
+  scoreEl.className = 'lp-leaderboard-score';
+  scoreEl.textContent = `${score.score} pts`;
+
+  identity.append(rankEl, nameEl);
+  row.append(identity, scoreEl);
+  return row;
 }
 
 // ---- Inline SVG icons -------------------------------------------------------
