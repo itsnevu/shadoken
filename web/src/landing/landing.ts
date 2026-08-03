@@ -422,7 +422,7 @@ function showcase(): string {
     <div class="lp-shots">
       <figure class="lp-shot reveal">
         <div class="lp-shot__frame">
-          <img src="/gameplay_0.png" alt="Shadoken gameplay: a swarm of ninjas crossing a gravity chamber past a spinning saw-blade" loading="lazy" decoding="async" />
+          <img src="/gameplay_1.png" alt="Shadoken gameplay: a swarm of ninjas crossing a gravity chamber past a spinning saw-blade" loading="lazy" decoding="async" />
         </div>
         <figcaption>Deploy the swarm &mdash; watch the chamber count climb.</figcaption>
       </figure>
