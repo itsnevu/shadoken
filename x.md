@@ -1,6 +1,6 @@
 # 🥷 Shadoken — Game Overview & Architecture Specification
 
-> **Shadoken** (reborn dari *Numerous Ninjas*) adalah game **2D Multiplayer Endless Gravity-Bending Platformer Race** berbasis Web3. Game ini menggabungkan fisika manipulasi gravitasi yang intens, kompetisi real-time PvP, dan integrasi blockchain untuk sistem *Prize Pool* serta NFT rewards.
+> **Shadoken** adalah game **2D Multiplayer Endless Gravity-Bending Platformer Race** berbasis Web3. Game ini menggabungkan fisika manipulasi gravitasi yang intens, kompetisi real-time PvP, dan integrasi blockchain untuk sistem *Prize Pool* serta NFT rewards.
 
 ---
 
