@@ -21,6 +21,7 @@ export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => v
 
   bar.innerHTML = `
     <button class="gt-audio" title="Toggle audio" aria-label="Toggle audio">${initialMute ? '🔇' : '🔊'}</button>
+    <button class="gt-fullscreen" title="Toggle fullscreen" aria-label="Toggle fullscreen">⛶</button>
     <button class="gt-exit" title="Leave game" aria-label="Leave game">‹ Exit</button>
     <div class="gt-spacer"></div>
     <div class="gt-status ${opts.multiplayer ? 'is-mp' : 'is-solo'}">
@@ -38,8 +39,22 @@ export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => v
 
   const exitBtn = bar.querySelector('.gt-exit') as HTMLButtonElement;
   const audioBtn = bar.querySelector('.gt-audio') as HTMLButtonElement;
+  const fullscreenBtn = bar.querySelector('.gt-fullscreen') as HTMLButtonElement;
   const walletAddrEl = bar.querySelector('.gt-wallet-addr') as HTMLElement;
   const walletEl = bar.querySelector('.gt-wallet') as HTMLElement;
+
+  const onToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.warn('[topbar] Fullscreen request failed', err);
+      });
+    } else {
+      document.exitFullscreen().catch((err) => {
+        console.warn('[topbar] Exit fullscreen failed', err);
+      });
+    }
+  };
+  fullscreenBtn.addEventListener('click', onToggleFullscreen);
 
   let isMuted = initialMute;
   const onToggleAudio = () => {
@@ -96,6 +111,7 @@ export function mountGameTopbar(host: HTMLElement, opts: TopbarOptions): () => v
   return () => {
     exitBtn.removeEventListener('click', onExit);
     audioBtn.removeEventListener('click', onToggleAudio);
+    fullscreenBtn.removeEventListener('click', onToggleFullscreen);
     offPlayers();
     offStatus();
     offWallet();

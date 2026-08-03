@@ -26,7 +26,8 @@
   flex: 1;
 }
 
-.gt-audio {
+.gt-audio,
+.gt-fullscreen {
   appearance: none;
   border: 1px solid var(--line);
   background: rgba(30, 25, 64, 0.75);
@@ -41,7 +42,8 @@
   justify-content: center;
   transition: transform 0.1s ease;
 }
-.gt-audio:active {
+.gt-audio:active,
+.gt-fullscreen:active {
   transform: scale(0.92);
 }
 
