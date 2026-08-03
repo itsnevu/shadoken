@@ -49,13 +49,65 @@ export class HudScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0);
 
-    // ---- touch / click controls ----
-    this.buildControls();
-
-    // Rebuild positions if the game is resized.
-    this.scale.on('resize', () => this.layoutControls());
-    this.events.on('shutdown', () => this.scale.off('resize', this.layoutControls, this));
+    // ---- touch / click controls (Only on touch devices) ----
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+      this.buildControls();
+      // Rebuild positions if the game is resized.
+      this.scale.on('resize', () => this.layoutControls());
+      this.events.on('shutdown', () => this.scale.off('resize', this.layoutControls, this));
+    } else {
+      this.buildDesktopHints();
+      this.scale.on('resize', () => this.layoutDesktopHints());
+      this.events.on('shutdown', () => this.scale.off('resize', this.layoutDesktopHints, this));
+    }
   }
+
+  private desktopHintsContainer?: Phaser.GameObjects.Container;
+
+  private buildDesktopHints(): void {
+    if (this.desktopHintsContainer) {
+      this.desktopHintsContainer.destroy();
+    }
+
+    const style = { fontFamily: FONT, fontSize: '12px', color: 'rgba(255, 255, 255, 0.45)', fontStyle: 'bold' };
+    const keyStyle = { fontFamily: FONT, fontSize: '11px', color: '#ccff00', fontStyle: 'bold' };
+
+    const makeKeyBadge = (keyText: string, actionText: string) => {
+      const bg = this.add.graphics();
+      bg.fillStyle(0x1b1f24, 0.6);
+      bg.fillRoundedRect(-14, -12, 28, 24, 6);
+      bg.lineStyle(1, 0x363d47, 0.8);
+      bg.strokeRoundedRect(-14, -12, 28, 24, 6);
+
+      const kTxt = this.add.text(0, 0, keyText, keyStyle).setOrigin(0.5);
+      const aTxt = this.add.text(22, 0, actionText, style).setOrigin(0, 0.5);
+      return this.add.container(0, 0, [bg, kTxt, aTxt]);
+    };
+
+    const leftRight = makeKeyBadge('A D', 'Move');
+    const jump = makeKeyBadge('SPC', 'Jump');
+    const rotate = makeKeyBadge('SFT', 'Rotate');
+    const sabotage = makeKeyBadge('E', 'Skill');
+
+    this.desktopHintsContainer = this.add.container(0, 0, [leftRight, jump, rotate, sabotage]);
+    this.desktopHintsContainer.setDepth(30).setScrollFactor(0);
+    this.layoutDesktopHints();
+  }
+
+  private layoutDesktopHints = (): void => {
+    if (!this.desktopHintsContainer) return;
+    const h = this.scale.height;
+    const bottom = h - 25;
+
+    const children = this.desktopHintsContainer.list as Phaser.GameObjects.Container[];
+    if (children.length === 4) {
+      children[0].setPosition(30, bottom);
+      children[1].setPosition(130, bottom);
+      children[2].setPosition(210, bottom);
+      children[3].setPosition(290, bottom);
+    }
+  };
 
   private buildControls(): void {
     const holdBtn = (icon: string, onDown: () => void, onUp: () => void): Phaser.GameObjects.Container => {

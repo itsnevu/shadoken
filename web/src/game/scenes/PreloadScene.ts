@@ -62,21 +62,21 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private buildTextures(): void {
-    // --- ninja: dark shinobi silhouette + red scarf ---
+    // --- ninja: neutral white base silhouette so setTint(color) colors the ninja cleanly ---
     this.tex('ninja', 20, 24, (g) => {
-      g.fillStyle(C.black, 1);
+      g.fillStyle(0xffffff, 1);
       g.fillRoundedRect(4, 6, 12, 16, 4); // torso
-      g.fillStyle(0x242012, 1);
+      g.fillStyle(0xdddddd, 1);
       g.fillCircle(10, 7, 5); // hood/head
-      g.fillStyle(C.black, 1);
+      g.fillStyle(0xffffff, 1);
       g.fillRect(5, 5, 10, 3); // hood brim
-      g.fillStyle(C.accent, 1);
+      g.fillStyle(0xffffff, 1);
       g.fillRect(3, 10, 14, 3); // scarf
       g.fillTriangle(3, 10, 3, 16, 0, 13); // scarf tail
-      g.fillStyle(C.accentBright, 1);
+      g.fillStyle(0x000000, 1);
       g.fillRect(7, 6, 2, 2); // eyes
       g.fillRect(11, 6, 2, 2);
-      g.fillStyle(0x100d07, 1);
+      g.fillStyle(0x333333, 1);
       g.fillRect(5, 16, 10, 2); // belt
     });
 

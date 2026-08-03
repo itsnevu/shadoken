@@ -1,8 +1,8 @@
 .pool-console {
   position: fixed;
   right: 18px;
-  bottom: 18px;
-  z-index: 70;
+  top: 76px;
+  z-index: 100;
   font-family: var(--font-body);
   color: var(--ink);
   pointer-events: auto;
@@ -30,7 +30,7 @@
 .pool-console__panel {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 12px);
+  top: calc(100% + 8px);
   width: min(360px, calc(100vw - 28px));
   padding: 14px;
   border: 1px solid rgba(204, 255, 0, 0.24);
@@ -49,6 +49,33 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
+}
+
+.pool-console__cs-banner {
+  background: rgba(255, 159, 208, 0.12);
+  border: 1px solid rgba(255, 159, 208, 0.3);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.pool-console__cs-badge {
+  display: inline-block;
+  background: #ff9fd0;
+  color: #1c180d;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.pool-console__cs-banner p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .pool-console__title {

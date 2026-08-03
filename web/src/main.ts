@@ -24,6 +24,7 @@ import { registerServiceWorker } from './pwa/register-sw';
 import { mountGameTopbar } from './ui/game-topbar';
 import { mountGameLeaderboard } from './ui/game-leaderboard';
 import { showToast } from './ui/toast';
+import { showMatchmakingModal } from './ui/matchmaking-modal';
 import { mountPoolConsole } from './web3/pool-console';
 
 const landingEl = document.getElementById('screen-landing') as HTMLElement;
@@ -80,17 +81,65 @@ async function enterGame(multiplayer: boolean, guest = false, skin = 0, daily = 
   let seed = daily ? dailySeed() : Math.floor((Date.now() % 2147483647));
   let mp = false;
   if (multiplayer && MULTIPLAYER.enabled) {
+    let closeMmModal: (() => void) | null = null;
     try {
       net = createNetClient();
       bus.emit('net:status', 'connecting');
-      await net.join(session, skin);
+      
+      let opponentFound = false;
+
+      // Promise that resolves when connection succeeds and opponent search resolves
+      await new Promise<void>((resolve, reject) => {
+        const modalCloser = showMatchmakingModal({
+          timeoutSeconds: 8,
+          onCancel: () => {
+            reject(new Error('Matchmaking cancelled by user.'));
+          },
+          onTimeoutSolo: () => {
+            reject(new Error('Matchmaking timeout — switching to Solo.'));
+          },
+          onRetry: () => {
+            modalCloser();
+            enterGame(multiplayer, guest, skin, daily);
+          },
+        });
+        closeMmModal = modalCloser;
+
+        net!.join(session, skin)
+          .then(() => {
+            // Check if there are other players in room right away
+            net!.onPlayers((players: PlayerSnapshot[]) => {
+              const others = players.filter((p) => p.sessionId !== net?.sessionId);
+              if (others.length > 0 && !opponentFound) {
+                opponentFound = true;
+                modalCloser();
+                resolve();
+              }
+            });
+
+            // If joined successfully, give 4s grace for ghost sync before entering arena
+            setTimeout(() => {
+              if (!opponentFound) {
+                modalCloser();
+                resolve();
+              }
+            }, 4000);
+          })
+          .catch((err) => reject(err));
+      });
+
       seed = net.seed;
       mp = true;
+      showToast('Connected to Arena! Live ghosts synced.', 'success');
     } catch (err) {
-      console.warn('[main] multiplayer join failed, falling back to solo', err);
-      showToast('Arena unavailable — playing solo.', 'info');
+      console.warn('[main] multiplayer join failed or cancelled', err);
+      if (closeMmModal) (closeMmModal as () => void)();
       net?.leave();
       net = null;
+      if (String(err).includes('cancelled')) {
+        return; // Return to landing screen
+      }
+      showToast('No active opponents — playing in Solo Practice mode.', 'info');
     }
   }
 

@@ -180,10 +180,10 @@ export class ChamberManager {
       this.addSolid(c, x0 - CONST.WALL_THICK, x0, ceilBot, floorTop);
     }
 
-    // Right boundary rib (solid middle, gaps at floor & ceiling).
+    // Right boundary rib (solid wall dividing chambers with standard pass gaps near floor/ceiling).
     const rx = x0 + w;
-    const ribTop = ceilBot + 110;
-    const ribBot = floorTop - 110;
+    const ribTop = ceilBot + 70;
+    const ribBot = floorTop - 70;
     this.addSolid(c, rx - CONST.WALL_THICK / 2, rx + CONST.WALL_THICK / 2, ribTop, ribBot);
 
     if (i === 0) {

@@ -155,13 +155,19 @@ export function mountPoolConsole(host: HTMLElement): () => void {
           </div>
           <button class="pool-console__icon" type="button" title="Refresh pool" data-refresh-pool ${readBusy || !configured ? 'disabled' : ''}>R</button>
         </div>
-        <div class="pool-console__grid">
+        ${!configured ? `
+          <div class="pool-console__cs-banner">
+            <span class="pool-console__cs-badge">COMING SOON</span>
+            <p>Shadoken Pool smart contract is not yet deployed on Mainnet/Testnet. Staking pool & reward minting features are currently under integration.</p>
+          </div>
+        ` : ''}
+        <div class="pool-console__grid" ${!configured ? 'style="opacity:0.4;pointer-events:none;"' : ''}>
           <label>Deposit ${html(symbol)}<input data-deposit value="${html(form.deposit)}" inputmode="decimal"></label>
           <label>Entry ${html(symbol)}<input data-entry value="${html(form.entry)}" inputmode="decimal"></label>
           <label>Cosmetic ID<input data-token value="${html(form.token)}" inputmode="numeric"></label>
           <label>Amount<input data-amount value="${html(form.amount)}" inputmode="numeric"></label>
         </div>
-        <div class="pool-console__actions">
+        <div class="pool-console__actions" ${!configured ? 'style="opacity:0.4;pointer-events:none;"' : ''}>
           <button type="button" data-deposit-action ${canWrite ? '' : 'disabled'}>Deposit to Pool</button>
           <button type="button" data-enter-action ${canWrite ? '' : 'disabled'}>Enter Season</button>
           <button type="button" data-price-action ${readBusy || !configured ? 'disabled' : ''}>Read Cosmetic Price</button>
@@ -247,7 +253,6 @@ export function mountPoolConsole(host: HTMLElement): () => void {
   const offDisconnect = bus.on('wallet:disconnected', () => render());
   const offGameOver = bus.on('game:over', (result: RunResult) => {
     storeLastRun(result);
-    open = true;
     render();
   });
   // Only a server-issued ticket makes a run claimable — that is what lights up
@@ -255,7 +260,6 @@ export function mountPoolConsole(host: HTMLElement): () => void {
   const offTicket = bus.on('run:ticket', (ticket: RunTicket) => {
     storeRunTicket(ticket);
     hasFreshRun = true;
-    open = true;
     bus.emit('toast', { message: `Run verified — ${ticket.score} pts ready to claim.`, kind: 'success' });
     render();
   });

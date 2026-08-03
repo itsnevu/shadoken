@@ -111,10 +111,10 @@ const ROADMAP: RoadPhase[] = [
     done: true,
   },
   {
-    tag: 'Phase 02',
-    title: 'On-chain rewards & skin ownership',
+    tag: 'Phase 02 · Coming Soon',
+    title: 'NFT Minting & On-Chain Rewards',
     body:
-      'Verified RobinhoodChain scores, seasonal rewards and collectible ninja skins once the production chain endpoints are configured.',
+      'Official Minting launch for Ninja Cosmetic NFTs, achievement badges, verified RobinhoodChain score claims, and seasonal reward pools.',
     done: false,
   },
   {
@@ -178,9 +178,7 @@ function markup(): string {
   <header class="lp-nav" data-nav>
     <div class="lp-nav__inner">
       <a class="lp-brand" href="#lp-hero" data-scroll aria-label="Shadoken home">
-        <span class="lp-brand__mark" aria-hidden="true">
-          <span class="lp-brand__blade"></span>
-        </span>
+        <img src="/logo.png" alt="Shadoken Logo" class="lp-brand__img" width="32" height="32" />
         <span class="lp-brand__word">SHADO<span class="lp-brand__ken">KEN</span></span>
       </a>
 
@@ -190,6 +188,7 @@ function markup(): string {
         <a href="#lp-features" data-scroll data-nav-link>Features</a>
         <a href="#lp-how" data-scroll data-nav-link>How to Play</a>
         <a href="#lp-roadmap" data-scroll data-nav-link>Roadmap</a>
+        <span class="lp-nav-mint-cs">Mint <small>(Coming Soon)</small></span>
       </nav>
 
       <div class="lp-nav__actions">
@@ -244,10 +243,6 @@ function hero(): string {
     </div>
     <div class="lp-hero__inner">
       <div class="lp-hero__copy reveal">
-        <span class="lp-badge">
-          <span class="lp-badge__dot"></span>
-          Season 01 &middot; RobinhoodChain relay
-        </span>
         <h1 class="lp-hero__title">
           Shadoken
         </h1>
@@ -529,10 +524,6 @@ function footer(): string {
       </nav>
     </div>
     <div class="lp-footer__base">
-      <p class="lp-footer__credit">
-        Originally &ldquo;Numerous Ninjas&rdquo; by Adam Anderson &amp; David Pokora
-        &mdash; reborn for the web.
-      </p>
       <p class="lp-footer__copy">
         &copy; ${year} Shadoken
       </p>

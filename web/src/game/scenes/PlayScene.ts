@@ -23,7 +23,7 @@ import { REG, type HudData, type NetBridge, type VirtualInput } from '../shared'
 import { audioSynthBgm } from '../systems/audio-synth';
 
 const SWARM = CONST.SCHOOL;
-const SKINS = [0xccff00, 0xffffff, 0xf5c542, 0x9fe0ff, 0xff8a70, 0x8effb0, 0xff9fd0];
+const SKINS = [0xffffff, 0xff8a70, 0x9fe0ff, 0xffd27f, 0xccff00, 0x8effb0, 0xff9fd0];
 const SNAPSHOT_MS = 66; // ~15 Hz
 const FONT = 'Poppins, Trebuchet MS, system-ui, sans-serif';
 const SABOTAGE_MAX = 3;
@@ -102,6 +102,20 @@ export class PlayScene extends Phaser.Scene {
   private offSabotage?: () => void;
   private clones: Phaser.GameObjects.Sprite[] = [];
 
+  // dynamic background
+  private bgGfx?: Phaser.GameObjects.Graphics;
+  private bgParticles?: Phaser.GameObjects.Particles.ParticleEmitter;
+  private currentThemeIndex = 0;
+  private gridOffsetX = 0;
+  private gridOffsetY = 0;
+
+  private static THEMES = [
+    { name: 'Emerald Dojo', bg: 0x0c1208, grid: 0xccff00, alpha: 0.1, particleTints: [0xccff00, 0x8effb0] },
+    { name: 'Neon Cyberpunk', bg: 0x08101a, grid: 0x9fe0ff, alpha: 0.15, particleTints: [0x9fe0ff, 0x00e5ff] },
+    { name: 'Solar Inferno', bg: 0x180a06, grid: 0xff8a70, alpha: 0.15, particleTints: [0xff8a70, 0xf5c542] },
+    { name: 'Void Phantom', bg: 0x14061a, grid: 0xff9fd0, alpha: 0.16, particleTints: [0xff9fd0, 0xe040fb] },
+  ];
+
   constructor() {
     super('Play');
   }
@@ -174,13 +188,13 @@ export class PlayScene extends Phaser.Scene {
     const spawnX = 150;
     this.chambers.update(0, spawnX);
 
-    // ---- spawn the swarm ----
+    // ---- spawn the swarm using selected skin color ----
     const floorTop = CONST.FLOOR_TOP;
+    const selectedSkinColor = SKINS[this.opts.skin % SKINS.length] ?? SKINS[0]!;
     for (let i = 0; i < SWARM; i++) {
       const nx = spawnX + this.rng.between(-40, 60);
       const ny = floorTop - 40 - this.rng.between(0, 60);
-      const tint = SKINS[i % SKINS.length]!;
-      const n = new Ninja(this, nx, ny, tint, 1);
+      const n = new Ninja(this, nx, ny, selectedSkinColor, 1);
       n.facing = 1;
       this.ninjas.push(n);
     }
@@ -194,10 +208,15 @@ export class PlayScene extends Phaser.Scene {
     this.physics.add.overlap(this.ninjas, this.pickups, this.onPickup, undefined, this);
     this.physics.add.overlap(this.ninjas, this.arrows, this.onArrow, undefined, this);
 
+    // ---- background & objective ----
+    this.createCyberBackground();
+
     // ---- camera ----
     const cam = this.cameras.main;
-    cam.setBackgroundColor('#1C180D');
+    cam.setBackgroundColor('#0c1208');
     cam.centerOn(this.leader.x, this.leader.y - 40);
+
+    this.showObjectiveStartBanner();
 
     // ---- keyboard ----
     const kb = this.input.keyboard;
@@ -330,6 +349,11 @@ export class PlayScene extends Phaser.Scene {
       this.arrowRushLeft = Math.max(0, this.arrowRushLeft - dt);
     }
 
+    // ----- animate dynamic background grid -----
+    this.gridOffsetX += dt * 30;
+    this.gridOffsetY += dt * 15;
+    this.drawDynamicGrid();
+
     // ----- world streaming -----
     const pressureDt = this.arrowRushLeft > 0 ? dt * 2.1 : dt;
     this.chambers.update(pressureDt, this.leader.x);
@@ -375,6 +399,9 @@ export class PlayScene extends Phaser.Scene {
       this.sabotageCharge = Math.min(SABOTAGE_MAX, this.sabotageCharge + gained);
       this.checkRaceFinish();
       this.updateUnlocks();
+
+      // Check and trigger dynamic background theme change based on chamber milestone
+      this.updateDynamicBackgroundTheme();
 
       // Spawn celebratory RobinhoodChain lime particle bursts on all surviving ninjas.
       try {
@@ -901,6 +928,154 @@ export class PlayScene extends Phaser.Scene {
       if (this.cache.audio.exists(key)) this.sound.play(key, { volume: vol });
     } catch {
       /* audio unavailable — non-fatal */
+    }
+  }
+
+  private currentColor = { r: 12, g: 18, b: 8 }; // Initial Emerald Dojo background
+  private currentGridColor = { r: 204, g: 255, b: 0, alpha: 0.1 };
+
+  private showObjectiveStartBanner(): void {
+    const cam = this.cameras.main;
+    const banner = this.add.container(cam.width / 2, 140).setDepth(200).setScrollFactor(0);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x131109, 0.92);
+    bg.fillRoundedRect(-240, -40, 480, 80, 16);
+    bg.lineStyle(2, 0xccff00, 0.8);
+    bg.strokeRoundedRect(-240, -40, 480, 80, 16);
+
+    const title = this.add.text(0, -14, 'MISSION OBJECTIVE', {
+      fontFamily: FONT,
+      fontSize: '13px',
+      color: '#ccff00',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    const desc = this.add.text(0, 10, 'Race through 10 Chambers & Keep Your Ninjas Alive!', {
+      fontFamily: FONT,
+      fontSize: '15px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    banner.add([bg, title, desc]);
+    banner.setAlpha(0).setScale(0.85);
+
+    this.tweens.add({
+      targets: banner,
+      alpha: 1,
+      scale: 1,
+      duration: 500,
+      ease: 'Back.out',
+      onComplete: () => {
+        this.time.delayedCall(3000, () => {
+          this.tweens.add({
+            targets: banner,
+            alpha: 0,
+            y: 110,
+            duration: 600,
+            ease: 'Power2.in',
+            onComplete: () => banner.destroy(),
+          });
+        });
+      },
+    });
+  }
+
+  private createCyberBackground(): void {
+    this.bgGfx = this.add.graphics().setDepth(-100).setScrollFactor(1.0);
+
+    try {
+      this.bgParticles = this.add.particles(0, 0, 'particle', {
+        x: { min: -500, max: 3000 },
+        y: { min: -500, max: 1500 },
+        speed: { min: 8, max: 35 },
+        scale: { start: 1.0, end: 0.1 },
+        alpha: { start: 0.4, end: 0 },
+        blendMode: 'ADD',
+        lifespan: 3500,
+        frequency: 180,
+        tint: [0xccff00, 0x8effb0],
+      }).setDepth(-90).setScrollFactor(0.15);
+    } catch (e) {
+      console.warn('[game] ambient bg particles error', e);
+    }
+
+    this.drawDynamicGrid();
+  }
+
+  private drawDynamicGrid(): void {
+    if (!this.bgGfx) return;
+    this.bgGfx.clear();
+
+    const gridHex = Phaser.Display.Color.GetColor(this.currentGridColor.r, this.currentGridColor.g, this.currentGridColor.b);
+    this.bgGfx.lineStyle(2, gridHex, this.currentGridColor.alpha);
+    const spacing = 120;
+    
+    // Draw world-space grid covering active camera area plus buffer
+    const cam = this.cameras.main;
+    const left = cam.scrollX - 400;
+    const right = cam.scrollX + cam.width + 400;
+    const top = cam.scrollY - 400;
+    const bottom = cam.scrollY + cam.height + 400;
+
+    const startX = Math.floor((left - this.gridOffsetX) / spacing) * spacing + (this.gridOffsetX % spacing);
+    const startY = Math.floor((top - this.gridOffsetY) / spacing) * spacing + (this.gridOffsetY % spacing);
+
+    for (let x = startX; x < right; x += spacing) {
+      this.bgGfx.lineBetween(x, top, x, bottom);
+    }
+    for (let y = startY; y < bottom; y += spacing) {
+      this.bgGfx.lineBetween(left, y, right, y);
+    }
+  }
+
+  private updateDynamicBackgroundTheme(): void {
+    const chamber = this.chambers.enteredCount;
+    const newThemeIndex = Math.min(PlayScene.THEMES.length - 1, Math.floor(chamber / 3));
+
+    if (newThemeIndex !== this.currentThemeIndex) {
+      this.currentThemeIndex = newThemeIndex;
+      const theme = PlayScene.THEMES[this.currentThemeIndex]!;
+
+      // Parse target RGB colors
+      const targetBgColor = Phaser.Display.Color.IntegerToColor(theme.bg);
+      const targetGridColor = Phaser.Display.Color.IntegerToColor(theme.grid);
+
+      // Toast notification for new environment stage
+      bus.emit('toast', { message: `ZONE ENTERED: ${theme.name.toUpperCase()}`, kind: 'info' });
+
+      // Seamless color tween transition over 1.5 seconds
+      this.tweens.add({
+        targets: this.currentColor,
+        r: targetBgColor.red,
+        g: targetBgColor.green,
+        b: targetBgColor.blue,
+        duration: 1500,
+        ease: 'Linear',
+        onUpdate: () => {
+          this.cameras.main.setBackgroundColor(Phaser.Display.Color.GetColor(
+            Math.round(this.currentColor.r),
+            Math.round(this.currentColor.g),
+            Math.round(this.currentColor.b)
+          ));
+        },
+      });
+
+      this.tweens.add({
+        targets: this.currentGridColor,
+        r: targetGridColor.red,
+        g: targetGridColor.green,
+        b: targetGridColor.blue,
+        alpha: theme.alpha,
+        duration: 1500,
+        ease: 'Linear',
+      });
+
+      // Update particle tints
+      if (this.bgParticles) {
+        this.bgParticles.particleTint = theme.particleTints as any;
+      }
     }
   }
 
