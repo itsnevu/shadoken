@@ -61,6 +61,8 @@ export class PlayScene extends Phaser.Scene {
   // camera
   private camFocus = new Phaser.Math.Vector2();
   private camAngle = 0;
+  // pre-allocated centroid vector to avoid per-frame heap alloc
+  private readonly _centroid = new Phaser.Math.Vector2();
   private targetCamAngle = 0;
 
   // nausea (rotation limiter)
@@ -105,6 +107,8 @@ export class PlayScene extends Phaser.Scene {
   // dynamic background
   private bgGfx?: Phaser.GameObjects.Graphics;
   private bgParticles?: Phaser.GameObjects.Particles.ParticleEmitter;
+  private gridLastDrawMs = 0;
+  private static readonly GRID_DRAW_INTERVAL_MS = 66; // ~15fps max for bg grid
   private currentThemeIndex = 0;
   private gridOffsetX = 0;
   private gridOffsetY = 0;
@@ -349,10 +353,14 @@ export class PlayScene extends Phaser.Scene {
       this.arrowRushLeft = Math.max(0, this.arrowRushLeft - dt);
     }
 
-    // ----- animate dynamic background grid -----
+    // ----- animate dynamic background grid (throttled to ~15fps) -----
     this.gridOffsetX += dt * 30;
     this.gridOffsetY += dt * 15;
-    this.drawDynamicGrid();
+    const nowMs = this.time.now;
+    if (nowMs - this.gridLastDrawMs >= PlayScene.GRID_DRAW_INTERVAL_MS) {
+      this.gridLastDrawMs = nowMs;
+      this.drawDynamicGrid();
+    }
 
     // ----- world streaming -----
     const pressureDt = this.arrowRushLeft > 0 ? dt * 2.1 : dt;
@@ -403,11 +411,11 @@ export class PlayScene extends Phaser.Scene {
       // Check and trigger dynamic background theme change based on chamber milestone
       this.updateDynamicBackgroundTheme();
 
-      // Spawn celebratory RobinhoodChain lime particle bursts on all surviving ninjas.
+      // Spawn celebratory lime particle bursts — auto-destroy after lifespan.
       try {
         for (const n of this.ninjas) {
           if (n.alive) {
-            this.add.particles(n.x, n.y, 'particle', {
+            const emitter = this.add.particles(n.x, n.y, 'particle', {
               speed: { min: -100, max: 100 },
               scale: { start: 1.4, end: 0 },
               blendMode: 'SCREEN',
@@ -416,6 +424,8 @@ export class PlayScene extends Phaser.Scene {
               maxParticles: 8,
               tint: 0xccff00,
             });
+            // Must destroy the emitter after particles expire, else it leaks.
+            this.time.delayedCall(600, () => { try { emitter.destroy(); } catch { /* ignore */ } });
           }
         }
       } catch (e) {
@@ -552,13 +562,13 @@ export class PlayScene extends Phaser.Scene {
 
   // ---- water ----
   private applyWater(n: Ninja): void {
-    let inWater = false;
-    for (const r of this.chambers.waterRects) {
-      if (Phaser.Geom.Rectangle.Contains(r, n.x, n.y)) {
-        inWater = true;
-        break;
-      }
-    }
+    // Early-exit with find() — only test rects within a generous x-window of the ninja
+    // to skip rects from distant chambers without a full loop.
+    const nx = n.x;
+    const ny = n.y;
+    const inWater = this.chambers.waterRects.some(
+      (r) => nx >= r.x && nx <= r.right && ny >= r.y && ny <= r.bottom,
+    );
     if (inWater !== n.submerged) {
       n.setSubmerged(inWater);
       if (inWater) this.playSfx('sfx_splash', 0.4);
@@ -591,8 +601,9 @@ export class PlayScene extends Phaser.Scene {
         n++;
       }
     }
-    if (n === 0) return this.camFocus.clone();
-    return new Phaser.Math.Vector2(sx / n, sy / n);
+    // Reuse pre-allocated vector — no heap alloc per frame.
+    if (n === 0) return this._centroid.copy(this.camFocus);
+    return this._centroid.set(sx / n, sy / n);
   }
 
   // ---- collision handlers ----

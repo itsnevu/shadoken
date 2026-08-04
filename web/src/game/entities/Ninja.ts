@@ -25,6 +25,9 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
   isLeader = false;
   frozen = false;
   private trailTimer = 0;
+  private trailPool: Phaser.GameObjects.Sprite[] = [];
+  private trailPoolIdx = 0;
+  private static readonly TRAIL_POOL_SIZE = 6;
 
   facing: 1 | -1 = 1;
   ninjaState: NinjaState = 'idle';
@@ -47,6 +50,15 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
     body.setSize(2.2 * CONST.SCALE, 2.0 * CONST.SCALE);
     body.setBounce(0, 0);
     body.setCollideWorldBounds(false);
+
+    // Pre-allocate trail afterimage pool — reuse instead of alloc/GC each frame.
+    for (let i = 0; i < Ninja.TRAIL_POOL_SIZE; i++) {
+      const s = scene.add.sprite(x, y, 'ninja');
+      s.setOrigin(0.5, 0.55);
+      s.setVisible(false);
+      s.setDepth(19);
+      this.trailPool.push(s);
+    }
   }
 
   get arcadeBody(): Phaser.Physics.Arcade.Body {
@@ -99,9 +111,12 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
     b.setVelocity(0, 0);
     b.enable = false;
 
-    // Spawn color-coded ninja particle burst on death
+    // Hide all pooled trail sprites immediately.
+    for (const s of this.trailPool) s.setVisible(false);
+
+    // Spawn color-coded ninja particle burst on death — destroy after lifespan.
     try {
-      this.scene.add.particles(this.x, this.y, 'particle', {
+      const emitter = this.scene.add.particles(this.x, this.y, 'particle', {
         speed: { min: -160, max: 160 },
         angle: { min: 0, max: 360 },
         scale: { start: 1.2, end: 0 },
@@ -110,8 +125,10 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
         gravityY: 300,
         quantity: 12,
         maxParticles: 12,
-        tint: this.tintTopLeft || this.tint
+        tint: this.tintTopLeft || this.tint,
       });
+      // Auto-destroy after all particles have expired.
+      this.scene.time.delayedCall(700, () => { try { emitter.destroy(); } catch { /* ignore */ } });
     } catch (e) {
       console.warn('[ninja] death particles failed', e);
     }
@@ -196,24 +213,24 @@ export class Ninja extends Phaser.Physics.Arcade.Sprite {
   }
 
   private spawnTrailAfterimage(): void {
-    try {
-      const afterimage = this.scene.add.sprite(this.x, this.y, 'ninja');
-      afterimage.setScale(this.scaleX, this.scaleY);
-      afterimage.setOrigin(this.originX, this.originY);
-      afterimage.setRotation(this.rotation);
-      afterimage.setFlipX(this.flipX);
-      afterimage.setTint(this.tintTopLeft || this.tint);
-      afterimage.setAlpha(0.28);
-      afterimage.setDepth(this.depth - 1);
+    // Round-robin through the pre-allocated pool — zero heap allocation per call.
+    const afterimage = this.trailPool[this.trailPoolIdx % Ninja.TRAIL_POOL_SIZE]!;
+    this.trailPoolIdx = (this.trailPoolIdx + 1) % Ninja.TRAIL_POOL_SIZE;
 
-      this.scene.tweens.add({
-        targets: afterimage,
-        alpha: 0,
-        duration: 320,
-        onComplete: () => afterimage.destroy()
-      });
-    } catch (e) {
-      /* ignore */
-    }
+    afterimage.setPosition(this.x, this.y);
+    afterimage.setScale(this.scaleX, this.scaleY);
+    afterimage.setRotation(this.rotation);
+    afterimage.setFlipX(this.flipX);
+    afterimage.setTint(this.tintTopLeft || this.tint);
+    afterimage.setAlpha(0.28);
+    afterimage.setVisible(true);
+
+    // Fade out using scene's tween manager — tweens reuse internally.
+    this.scene.tweens.add({
+      targets: afterimage,
+      alpha: 0,
+      duration: 320,
+      onComplete: () => afterimage.setVisible(false),
+    });
   }
 }
