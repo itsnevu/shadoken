@@ -45,6 +45,13 @@ export class PreloadScene extends Phaser.Scene {
     this.load.audio('sfx_smasher', 'audio/sfx_smasher.ogg');
     this.load.audio('sfx_splash', 'audio/sfx_splash.ogg');
 
+    // New audio assets
+    this.load.audio('sfx_coin', 'audio/coin.mp3');
+    this.load.audio('sfx_crack', 'audio/crack.mp3');
+    this.load.audio('bgm_game', 'audio/gamebackgroundsound.mp3');
+    this.load.audio('sfx_gameover', 'audio/gameover.mp3');
+    this.load.audio('sfx_swoosh', 'audio/swoosh.mp3');
+
     this.buildTextures();
   }
 

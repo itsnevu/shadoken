@@ -103,6 +103,7 @@ export class PlayScene extends Phaser.Scene {
   private shield = 0;
   private offSabotage?: () => void;
   private clones: Phaser.GameObjects.Sprite[] = [];
+  private deathsThisFrame = 0;
 
   // dynamic background
   private bgGfx?: Phaser.GameObjects.Graphics;
@@ -136,11 +137,16 @@ export class PlayScene extends Phaser.Scene {
     this.input$ = input;
     input.left = input.right = input.jump = input.rotate = input.sabotage = false;
 
-    // Start synthesized Background Music
+    // Start Background Music
     const isMuted = localStorage.getItem('shadoken-muted') === 'true';
     this.sound.mute = isMuted;
-    audioSynthBgm.start();
-    audioSynthBgm.setMute(isMuted);
+    audioSynthBgm.stop();
+    this.sound.stopByKey('bgm_game');
+    try {
+      this.sound.play('bgm_game', { loop: true, volume: 0.4 });
+    } catch (e) {
+      console.warn('BGM failed to play', e);
+    }
 
     this.offMute = bus.on('audio:muted', (muted) => {
       this.sound.mute = muted;
@@ -299,6 +305,7 @@ export class PlayScene extends Phaser.Scene {
 
   update(_time: number, deltaMs: number): void {
     if (this.over) return;
+    this.deathsThisFrame = 0;
     const dt = Math.min(deltaMs / 1000, 1 / 30);
 
     // ----- guest time limit ticker -----
@@ -443,6 +450,10 @@ export class PlayScene extends Phaser.Scene {
     // ----- HUD + game over -----
     this.publishHud(alive);
     if (alive === 0) this.gameOver();
+
+    if (this.deathsThisFrame >= 3) {
+      this.playSfx('sfx_crack', 0.55);
+    }
   }
 
   private isDown(k?: Phaser.Input.Keyboard.Key): boolean {
@@ -461,6 +472,7 @@ export class PlayScene extends Phaser.Scene {
     this.targetCamAngle += -Math.sign(dir) * (Math.PI / 2);
     this.nausea += CONST.NAUSEA_PER_ROTATE;
     if (this.nausea >= 1) this.nauseous = true;
+    this.playSfx('sfx_swoosh', 0.45);
   }
 
   private fireSabotage(): void {
@@ -641,6 +653,7 @@ export class PlayScene extends Phaser.Scene {
   };
 
   private applyPickup(kind: PickupKind): void {
+    let isCoinCollected = kind === 'coin';
     switch (kind) {
       case 'nitro':
         for (const n of this.ninjas) n.nitro = true;
@@ -680,6 +693,7 @@ export class PlayScene extends Phaser.Scene {
           this.bestStreak = Math.max(this.bestStreak, this.coinStreak);
           this.score += 10 * Math.min(5, this.coinStreak);
           this.sabotageCharge = SABOTAGE_MAX;
+          isCoinCollected = true;
         } else {
           this.applyPickup(roll);
           return;
@@ -691,7 +705,11 @@ export class PlayScene extends Phaser.Scene {
       const alive = this.ninjas.filter((n) => n.alive).length;
       this.score += Math.max(1, alive);
     }
-    this.playSfx('sfx_ninja', 0.25);
+    if (isCoinCollected) {
+      this.playSfx('sfx_coin', 0.35);
+    } else {
+      this.playSfx('sfx_ninja', 0.25);
+    }
   }
 
   private reviveNinjas(count: number): void {
@@ -710,6 +728,7 @@ export class PlayScene extends Phaser.Scene {
     this.coinStreak = 0;
     this.cameras.main.shake(180, 0.004);
     this.playSfx('sfx_smasher', 0.2);
+    this.deathsThisFrame++;
   }
 
   // ---- camera ----
@@ -810,6 +829,8 @@ export class PlayScene extends Phaser.Scene {
   private gameOver(): void {
     if (this.over) return;
     this.over = true;
+    this.sound.stopByKey('bgm_game');
+    this.playSfx('sfx_gameover', 0.65);
     const result: RunResult = {
       score: this.score,
       chambers: this.chambers.enteredCount,
@@ -1091,8 +1112,9 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private cleanup(): void {
-    // Stop synthesized Background Music
+    // Stop Background Music
     audioSynthBgm.stop();
+    this.sound.stopByKey('bgm_game');
     if (this.offMute) this.offMute();
     this.offSabotage?.();
 
